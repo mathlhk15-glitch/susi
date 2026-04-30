@@ -62,14 +62,10 @@ function switchTab(nm) {
     if (typeof updateUniAddonSection === 'function') updateUniAddonSection();
   }, 150);
   if (nm==='unimaterial') setTimeout(() => {
-    // 관리자 잠금 처리
+    const bd = document.getElementById('bd-unimaterial');
+    if (bd) bd.style.display = 'block';
     const lock = document.getElementById('uni-admin-lock');
-    const bd   = document.getElementById('bd-unimaterial');
-    if (lock && bd) {
-      const isAdmin = typeof window.isAdminLoggedIn === 'function' && window.isAdminLoggedIn();
-      lock.style.display = isAdmin ? 'none' : 'flex';
-      bd.style.display   = isAdmin ? 'block' : 'none';
-    }
+    if (lock) lock.style.display = 'none';
     if (typeof renderUniMaterialTab === 'function') renderUniMaterialTab();
   }, 50);
   if (nm==='parentview') setTimeout(() => { if (typeof renderParentView === 'function') renderParentView(); }, 80);
