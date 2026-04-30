@@ -133,7 +133,17 @@
         _setSession();
         overlay.style.transition = 'opacity .4s';
         overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 420);
+        setTimeout(() => {
+          overlay.remove();
+          // 일반 접속: 업로드 화면 표시, 결과 화면 숨기기
+          const isAdmin = typeof window.isAdminLoggedIn === 'function' && window.isAdminLoggedIn();
+          if (!isAdmin) {
+            const upScr = document.getElementById('up-scr');
+            const resScr = document.getElementById('res-scr');
+            if (upScr) upScr.style.display = 'block';
+            if (resScr) resScr.style.display = 'none';
+          }
+        }, 420);
       } else {
         errEl.textContent = '❌ 비밀번호가 올바르지 않습니다.';
         document.getElementById('site-pw-input').value = '';

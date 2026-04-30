@@ -61,7 +61,11 @@
     _clearSession();
     _toast('관리자 로그아웃 되었습니다.', '#888');
     _updateAdminButtons();
-    // 대학자료 탭 리렌더 (업로드 UI 숨김)
+    // 로그아웃 시 업로드 화면으로 복귀 (생기부 미업로드 상태)
+    const upScr = document.getElementById('up-scr');
+    const resScr = document.getElementById('res-scr');
+    if (upScr) upScr.style.display = 'block';
+    if (resScr) resScr.style.display = 'none';
     if (typeof window.renderUniMaterialTab === 'function') {
       setTimeout(window.renderUniMaterialTab, 50);
     }
