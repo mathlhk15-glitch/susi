@@ -209,6 +209,9 @@
       btn.innerHTML = '🔓 관리자 모드 <span style="font-size:10px;opacity:.8">(로그아웃)</span>';
       btn.style.background = '#1aaa6e';
       btn.onclick = function () { window.adminLogout(); };
+      // 관리자 로그인 시 사이드바 탭 전체 표시
+      const sbNav = document.getElementById('sb-nav');
+      if (sbNav) sbNav.style.display = 'block';
     } else {
       btn.innerHTML = '🔐 관리자 모드';
       btn.style.background = '#e67e22';
@@ -238,6 +241,11 @@
       </button>
 `;
     footer.insertBefore(wrap, footer.firstChild);
+    // 이미 관리자 로그인 상태면 즉시 탭 표시
+    if (_isSessionValid()) {
+      const sbNav = document.getElementById('sb-nav');
+      if (sbNav) sbNav.style.display = 'block';
+    }
   }
 
   // DOM 준비 후 초기화
