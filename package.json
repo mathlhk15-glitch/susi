@@ -1,0 +1,10 @@
+{
+  "name": "saenggibu-lhk15",
+  "version": "1.0.0",
+  "private": true,
+  "description": "모두의 생기부 분석기 Pro v13 (lhk15버전) - 모듈화 구조",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "preview": "npx serve . -p 3000"
+  }
+}
