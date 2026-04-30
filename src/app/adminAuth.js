@@ -236,13 +236,7 @@
         onclick="window.showAdminLoginModal(function(){ window._updateAdminButtons && window._updateAdminButtons(); })">
         🔐 관리자 모드
       </button>
-      <button id="site-pw-change-btn"
-        style="width:100%;padding:6px 10px;border:none;border-radius:8px;
-               font-size:11px;font-weight:600;cursor:pointer;color:#fff;
-               background:#8e44ad;margin-top:5px;transition:background .2s;letter-spacing:0.3px"
-        onclick="window.showSiteChangePwModal && window.showSiteChangePwModal()">
-        🔑 접속 비밀번호 변경
-      </button>`;
+`;
     footer.insertBefore(wrap, footer.firstChild);
   }
 
