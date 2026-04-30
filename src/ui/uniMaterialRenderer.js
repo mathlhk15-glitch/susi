@@ -411,8 +411,9 @@
 
     bd.style.display = 'block';
 
-    // [BUG-FIX] isAdminLoggedIn 함수 존재 여부 확인 후 호출
-    const isAdmin = (typeof window.isAdminLoggedIn === 'function') && window.isAdminLoggedIn();
+    // 업로드 UI는 항상 표시 (접속 비밀번호로 1차 필터링됨)
+    // 실제 업로드/삭제 실행 시 관리자 체크
+    const isAdmin = true;
 
     const savedMaterials = (typeof getSavedUniMaterials === 'function')
       ? getSavedUniMaterials() : [];
