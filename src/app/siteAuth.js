@@ -293,6 +293,10 @@
       localStorage.setItem(SITE_PW_HASH_KEY, newHash);
       modal.remove();
       _toast('✅ 접속 비밀번호가 변경되었습니다.', '#1aaa6e');
+      // 변경 즉시 반영: 기존 잠금화면 제거 후 재생성
+      const existingLock = document.getElementById('site-lock-screen');
+      if (existingLock) existingLock.remove();
+      setTimeout(_createLockScreen, 3100);
     };
   }
 
