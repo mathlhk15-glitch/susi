@@ -414,7 +414,7 @@ body {
 /* ─────────────────────────────────────────
    Result Screen
 ───────────────────────────────────────── */
-#res-scr { display: none; padding: 28px 36px; }
+#res-scr { padding: 28px 36px; }
 
 /* Tab bar */
 .tab-bar {
