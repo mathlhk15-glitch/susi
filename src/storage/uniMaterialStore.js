@@ -18,6 +18,7 @@
   const MAX_TEXT_LEN   = 8000;
   const MAX_KEYWORDS   = 50;
   const GIST_FILENAME  = 'uni_materials.json';
+  const DEFAULT_GIST_ID = '9fcf80b13d9ba63696372e70d142f47e'; // 기본 공유 Gist
 
   // ─────────────────────────────────────
   //  로컬 스토리지 유틸
@@ -65,12 +66,12 @@
   function getGistConfig() {
     try {
       const raw = localStorage.getItem(GIST_CFG_KEY);
-      if (!raw) return null;
+      if (!raw) return { gistId: DEFAULT_GIST_ID, token: '' };
       const cfg = JSON.parse(raw);
-      if (!cfg || !cfg.gistId) return null;
+      if (!cfg || !cfg.gistId) return { gistId: DEFAULT_GIST_ID, token: '' };
       return cfg;
     } catch (e) {
-      return null;
+      return { gistId: DEFAULT_GIST_ID, token: '' };
     }
   }
 
@@ -394,5 +395,33 @@
   window.pushToGist                = pushToGist;
   window.pullFromGist              = pullFromGist;
   window.createGist                = createGist;
+
+  // ── 페이지 로드 시 Gist 자동 동기화 (읽기 전용, 토큰 불필요) ──
+  const AUTO_SYNC_KEY = 'saenggibu_gist_last_sync';
+  const AUTO_SYNC_TTL = 60 * 60 * 1000; // 1시간마다 재동기화
+
+  function _shouldAutoSync() {
+    try {
+      const last = parseInt(localStorage.getItem(AUTO_SYNC_KEY) || '0', 10);
+      return Date.now() - last > AUTO_SYNC_TTL;
+    } catch (e) { return true; }
+  }
+
+  async function _autoSyncFromGist() {
+    if (!_shouldAutoSync()) return;
+    try {
+      const result = await syncFromGist();
+      if (result.ok) {
+        localStorage.setItem(AUTO_SYNC_KEY, Date.now().toString());
+      }
+    } catch (e) { /* 조용히 실패 */ }
+  }
+
+  // DOM 로드 후 자동 동기화 실행
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _autoSyncFromGist);
+  } else {
+    setTimeout(_autoSyncFromGist, 1000);
+  }
 
 })();
