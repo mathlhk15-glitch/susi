@@ -44,15 +44,26 @@ function openAdmissionInNewWindow(tabName) {
 
 
 function switchTab(nm) {
-  // 입시탐색기·대학자료는 PDF 없이도 res-scr 열기
-  const noAuthTabs = ['admission5', 'admission9'];
-  const adminOnlyTabs = ['unimaterial'];
-  if (noAuthTabs.includes(nm) || adminOnlyTabs.includes(nm)) {
-    const upScr = document.getElementById('up-scr');
-    const resScr = document.getElementById('res-scr');
-    if (upScr) upScr.style.display = 'none';
-    if (resScr) resScr.style.display = 'block';
-  }
+  const upScr = document.getElementById('up-scr');
+  const resScr = document.getElementById('res-scr');
+
+  // PDF 없이 접근 가능한 탭 목록
+  const alwaysTabs = ['admission5', 'admission9'];
+  const adminTabs  = ['unimaterial'];
+  const isAdmin    = typeof window.isAdminLoggedIn === 'function' && window.isAdminLoggedIn();
+  const hasPdf     = !!parsedData;
+
+  const canEnter =
+    hasPdf ||
+    alwaysTabs.includes(nm) ||
+    (adminTabs.includes(nm) && isAdmin);
+
+  if (!canEnter) return; // 접근 불가 탭이면 아무것도 안 함
+
+  // res-scr 열기, up-scr 닫기
+  if (upScr) upScr.style.display = 'none';
+  if (resScr) resScr.style.display = 'block';
+
   document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===TAB_IDX[nm]));
   // sb-ni active: onclick 속성으로 탭 이름 직접 매칭
   document.querySelectorAll('.sb-ni').forEach(n => {
@@ -87,7 +98,6 @@ function switchTab(nm) {
   // 대시보드 탭 전환 시 꺾은선 차트 재그리기
   if (nm==='dashboard') requestAnimationFrame(() => requestAnimationFrame(initGradeCharts));
   // 인쇄용 제목 갱신
-  const resScr = document.getElementById('res-scr');
   const stuNm = document.getElementById('sb-nm')?.textContent || '';
   if (resScr) resScr.setAttribute('data-print-title',
     (stuNm && stuNm !== '—' ? stuNm + ' — ' : '') + (TAB_PRINT_LABELS[nm] || nm));
