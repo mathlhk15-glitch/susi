@@ -76,7 +76,19 @@
 <div class="sb-stu-nm" id="sb-nm">—</div>
 <div class="sb-stu-sc" id="sb-sc">—</div>
 </div>
-<div class="sb-nav" id="sb-nav" style="display:block">
+<!-- ① 항상 보이는 메뉴: 입시탐색기 (PDF·관리자 불필요) -->
+<div class="sb-nav" id="sb-nav-always" style="display:block">
+<span class="sb-lbl">입시 탐색기</span>
+<div class="sb-ni" onclick="switchTab('admission5')"><div class="sb-pip" style="background:#58a6ff"></div>🎓 1·2학년 5등급 기준<span class="sb-cnt">2022</span></div>
+<div class="sb-ni" onclick="switchTab('admission9')"><div class="sb-pip" style="background:#ffa657"></div>🎓 3학년 9등급 기준<span class="sb-cnt">2015</span></div>
+</div>
+<!-- ② 관리자 로그인 시 보이는 메뉴: 대학자료 분석 (PDF 불필요) -->
+<div class="sb-nav" id="sb-nav-admin" style="display:none">
+<span class="sb-lbl">관리자 전용</span>
+<div class="sb-ni" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni">—</span></div>
+</div>
+<!-- ③ PDF 업로드 후 보이는 메뉴 -->
+<div class="sb-nav" id="sb-nav" style="display:none">
 <span class="sb-lbl">영역별 탐구활동</span>
 <div class="sb-ni active" onclick="switchTab('subject')"><div class="sb-pip" style="background:var(--cs)"></div>교과 탐구활동<span class="sb-cnt" id="snc-s">0</span></div>
 <div class="sb-ni" onclick="switchTab('auto')"><div class="sb-pip" style="background:var(--ca)"></div>자율활동<span class="sb-cnt" id="snc-a">0</span></div>
@@ -90,11 +102,8 @@
 <span class="sb-lbl">v13 분석 도구</span>
 <div class="sb-ni" onclick="switchTab('dashboard')"><div class="sb-pip" style="background:#e67e22"></div>📊 정량 대시보드<span class="sb-cnt" id="snc-db">—</span></div>
 <div class="sb-ni" onclick="switchTab('aiprompt')"><div class="sb-pip" style="background:#9b59b6"></div>🤖 AI 프롬프트<span class="sb-cnt" id="snc-ai">—</span></div>
-<div class="sb-ni" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni">—</span></div>
+<div class="sb-ni" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni2">—</span></div>
 <div class="sb-ni" onclick="switchTab('parentview')" style="border-left:2px solid #9b59b6;padding-left:6px"><div class="sb-pip" style="background:#9b59b6"></div>👨‍👩‍👧 학부모용 화면<span class="sb-cnt">—</span></div>
-<span class="sb-lbl">입시 탐색기</span>
-<div class="sb-ni" onclick="switchTab('admission5')"><div class="sb-pip" style="background:#58a6ff"></div>🎓 1·2학년 5등급 기준<span class="sb-cnt">2022</span></div>
-<div class="sb-ni" onclick="switchTab('admission9')"><div class="sb-pip" style="background:#ffa657"></div>🎓 3학년 9등급 기준<span class="sb-cnt">2015</span></div>
 </div>
 <div class="sb-ft">
 <div class="sb-copy">Copyright © All Teachers</div>
