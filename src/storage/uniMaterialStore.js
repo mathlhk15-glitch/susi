@@ -14,7 +14,7 @@
 
   const STORAGE_KEY    = 'saenggibu_uni_materials_v1';
   const GIST_CFG_KEY   = 'saenggibu_gist_config_v1';   // { gistId, token }
-  const MAX_ITEMS      = 50;
+  const MAX_ITEMS      = 200;
   const MAX_TEXT_LEN   = 8000;
   const MAX_KEYWORDS   = 50;
   const GIST_FILENAME  = 'uni_materials.json';
