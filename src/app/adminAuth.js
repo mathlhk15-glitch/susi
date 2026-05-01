@@ -66,6 +66,8 @@
     const resScr = document.getElementById('res-scr');
     if (upScr) upScr.style.display = 'block';
     if (resScr) resScr.style.display = 'none';
+    const sbNavAdmin = document.getElementById('sb-nav-admin');
+    if (sbNavAdmin) sbNavAdmin.style.display = 'none';
     if (typeof window.renderUniMaterialTab === 'function') {
       setTimeout(window.renderUniMaterialTab, 50);
     }
@@ -216,6 +218,8 @@
       // 관리자 로그인 시 사이드바 탭 전체 표시
       const sbNav = document.getElementById('sb-nav');
       if (sbNav) sbNav.style.display = 'block';
+      const sbNavAdmin = document.getElementById('sb-nav-admin');
+      if (sbNavAdmin) sbNavAdmin.style.display = 'block';
     } else {
       btn.innerHTML = '🔐 관리자 모드';
       btn.style.background = '#e67e22';
@@ -249,6 +253,8 @@
     if (_isSessionValid()) {
       const sbNav = document.getElementById('sb-nav');
       if (sbNav) sbNav.style.display = 'block';
+      const sbNavAdmin = document.getElementById('sb-nav-admin');
+      if (sbNavAdmin) sbNavAdmin.style.display = 'block';
     }
   }
 

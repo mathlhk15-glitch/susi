@@ -44,8 +44,22 @@ function openAdmissionInNewWindow(tabName) {
 
 
 function switchTab(nm) {
+  // 입시탐색기·대학자료는 PDF 없이도 res-scr 열기
+  const noAuthTabs = ['admission5', 'admission9'];
+  const adminOnlyTabs = ['unimaterial'];
+  if (noAuthTabs.includes(nm) || adminOnlyTabs.includes(nm)) {
+    const upScr = document.getElementById('up-scr');
+    const resScr = document.getElementById('res-scr');
+    if (upScr) upScr.style.display = 'none';
+    if (resScr) resScr.style.display = 'block';
+  }
   document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===TAB_IDX[nm]));
-  document.querySelectorAll('.sb-ni').forEach((n,i) => n.classList.toggle('active', i===TAB_IDX[nm]));
+  // sb-ni active: onclick 속성으로 탭 이름 직접 매칭
+  document.querySelectorAll('.sb-ni').forEach(n => {
+    const onclick = n.getAttribute('onclick') || '';
+    n.classList.toggle('active', onclick.includes("'" + nm + "'"));
+  });
+  // sb-ni active: onclick 속성으로 탭 이름 직접 매칭 (위에서 처리됨)
   document.querySelectorAll('.vp').forEach(p => p.classList.remove('active'));
   const vpEl = document.getElementById('vp-'+nm);
   if (vpEl) vpEl.classList.add('active');

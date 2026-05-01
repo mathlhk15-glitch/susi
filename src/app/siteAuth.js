@@ -135,14 +135,11 @@
         overlay.style.opacity = '0';
         setTimeout(() => {
           overlay.remove();
-          // 일반 접속: 업로드 화면 표시, 결과 화면 숨기기
-          const isAdmin = typeof window.isAdminLoggedIn === 'function' && window.isAdminLoggedIn();
-          if (!isAdmin) {
-            const upScr = document.getElementById('up-scr');
-            const resScr = document.getElementById('res-scr');
-            if (upScr) upScr.style.display = 'block';
-            if (resScr) resScr.style.display = 'none';
-          }
+          // 로그인 후 항상 업로드 화면 표시 (관리자/일반 공통)
+          const upScr = document.getElementById('up-scr');
+          const resScr = document.getElementById('res-scr');
+          if (upScr) upScr.style.display = 'block';
+          if (resScr) resScr.style.display = 'none';
         }, 420);
       } else {
         errEl.textContent = '❌ 비밀번호가 올바르지 않습니다.';
@@ -184,11 +181,22 @@
     alert('접속 비밀번호는 코드(siteAuth.js)에 고정되어 있습니다.\n변경하려면 파일을 수정 후 GitHub에 재업로드하세요.');
   };
 
+  // ── 화면 초기화 (업로드 화면 표시, 결과 화면 숨김) ──────────
+  function _initScreens() {
+    const upScr = document.getElementById('up-scr');
+    const resScr = document.getElementById('res-scr');
+    if (upScr) upScr.style.display = 'block';
+    if (resScr) resScr.style.display = 'none';
+  }
+
   // ── 초기화 ───────────────────────────────────────────────────
   function _init() {
     _injectStyles();
     if (!_isSessionValid()) {
       _createLockScreen();
+    } else {
+      // 세션이 이미 유효한 경우에도 화면 초기화
+      _initScreens();
     }
   }
 
