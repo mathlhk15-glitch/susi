@@ -19,17 +19,13 @@ function renderAIPrompt(parsedData, info, analysis) {
 </div>`;
   html += `</div>`;
 
-  html += `<div style="margin-bottom:12px">`;
-  html += `<label style="font-size:12px;font-weight:700;color:var(--tx2)">희망 분야 (프롬프트에 반영됨)</label>`;
-  html += `<input type="text" class="prompt-hope-input" id="prompt-hope-input" placeholder="예: 기계공학, 반도체공학, 컴퓨터공학" oninput="updatePromptPreview()">`;
-  html += `</div>`;
   // ── 자주 가는 대학 빠른선택 ──
   html += `<div style="margin-bottom:14px">`;
   html += `<div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px">🏫 자주 가는 대학 빠른선택</div>`;
   html += `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
   const QUICK_UNIS = ['창원대','부산대','경상국립대','경북대','충남대','부경대'];
   for (const u of QUICK_UNIS) {
-    html += `<button onclick="(function(){var el=document.getElementById('prompt-hope-input');if(el){el.value=(el.value?el.value+', ':'')+${JSON.stringify(u)};updatePromptPreview();}})()"
+    html += `<button onclick="(function(){var sel=document.getElementById('prompt-uni-select');if(sel){sel.value=${JSON.stringify(u)};if(!sel.querySelector('option[value=&quot;'+${JSON.stringify(u)}+'&quot;]')){var o=document.createElement('option');o.value=${JSON.stringify(u)};o.textContent=${JSON.stringify(u)};sel.appendChild(o);}sel.value=${JSON.stringify(u)};onPromptUniChange();}})()"
       style="padding:5px 12px;background:var(--sur2);border:1px solid var(--bdr2);border-radius:16px;
              font-size:12px;font-weight:700;color:var(--tx2);cursor:pointer;transition:all .15s"
       onmouseenter="this.style.background='var(--cs-bg)';this.style.borderColor='var(--cs)';this.style.color='var(--cs)'"
@@ -47,7 +43,7 @@ function renderAIPrompt(parsedData, info, analysis) {
   // 대학 선택 드롭다운
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">`;
   html += `<div>`;
-  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택</label>`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택(미선택시 부산대학교로 임의 지정)</label>`;
   html += `<select id="prompt-uni-select" onchange="onPromptUniChange()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;cursor:pointer">`;
   html += `<option value="">— 선택 안 함 —</option>`;
 
@@ -62,8 +58,8 @@ function renderAIPrompt(parsedData, info, analysis) {
 
   // 학과 입력
   html += `<div>`;
-  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">학과 입력</label>`;
-  html += `<input type="text" id="prompt-uni-dept" placeholder="예: 기계공학과" oninput="updatePromptPreview()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;box-sizing:border-box">`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">희망 학과 (프롬프트에 반영)</label>`;
+  html += `<input type="text" id="prompt-uni-dept" placeholder="예: 기계공학과, 신소재공학과" oninput="updatePromptPreview()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;box-sizing:border-box">`;
   html += `</div>`;
   html += `</div>`;
 
@@ -155,12 +151,12 @@ function onPromptUniChange() {
 }
 
 function updatePromptPreview() {
-  const hopeInput = document.getElementById('prompt-hope-input');
+  const deptInput = document.getElementById('prompt-uni-dept');
   const output = document.getElementById('prompt-output');
   if (!output || !parsedData || !v6Analysis) return;
 
-  const hopeText = hopeInput?.value || '';
-  // 희망분야가 바뀌면 분석도 일부 재실행
+  const hopeText = deptInput?.value || '';
+  // 희망학과가 바뀌면 분석도 일부 재실행
   const analysis = hopeText ? {
     ...v6Analysis,
     studentType: v6EstimateStudentType(v6Analysis.allRecords, hopeText),

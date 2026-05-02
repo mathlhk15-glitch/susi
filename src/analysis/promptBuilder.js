@@ -31,6 +31,31 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln("▶▶▶ [선택 A — 텍스트(Markdown) 출력] 선택 시 규칙:");
   ln("  - 응답 첫 줄: '▶ 텍스트(Markdown) 출력 모드로 응답합니다.'");
   ln("  - 제목은 【 】, 항목은 ▶, 번호는 ①②③ 형식으로 작성");
+  ln();
+  ln("  ⚠️ [텍스트 분할 출력 — 최우선 구조 규칙]");
+  ln("  이 프롬프트의 전체 분량은 단일 응답으로 출력할 수 없습니다.");
+  ln("  반드시 아래 3단계로 나눠 출력하고, 각 단계 끝에서 멈추세요.");
+  ln();
+  ln("  ┌─ 첫 번째 응답 ──────────────────────────────────────┐");
+  ln("  │ 1~6번 + 7번(활동 1~2, 각 활동 10단계 모두 포함)     │");
+  ln("  │ 마지막 줄: '👉 활동 3~5를 보려면 \"계속\"을 입력하세요' │");
+  ln("  │ → 여기서 반드시 출력을 멈추고 사용자 입력을 기다림    │");
+  ln("  └──────────────────────────────────────────────────────┘");
+  ln("  ┌─ 두 번째 응답 ('계속' 입력 후) ──────────────────────┐");
+  ln("  │ 7번(활동 3~5, 각 활동 10단계 모두 포함)              │");
+  ln("  │ 마지막 줄: '👉 8~15번을 보려면 \"계속\"을 입력하세요'  │");
+  ln("  │ → 여기서 반드시 출력을 멈추고 사용자 입력을 기다림    │");
+  ln("  └──────────────────────────────────────────────────────┘");
+  ln("  ┌─ 세 번째 응답 ('계속' 입력 후) ──────────────────────┐");
+  ln("  │ 8~15번 (15번 대학 적합도 분석은 필수 포함)           │");
+  ln("  │ 마지막에 Python 코드 블록 추가 (아래 참조)            │");
+  ln("  └──────────────────────────────────────────────────────┘");
+  ln();
+  ln("  절대로 1~15번을 한 번에 출력하지 마세요.");
+  ln("  활동을 축약·요약하여 한 응답에 욱여넣는 것을 금지합니다.");
+  ln("  각 활동의 10단계(①~⑩)는 단계당 2~3문장(40~80자)으로 상세 서술해야 합니다.");
+  ln();
+  ln("  [Python 코드 블록 — 세 번째 응답 마지막에 추가]");
   ln("  - 응답 마지막에 반드시 아래 Python 코드 블록을 그대로 추가:");
   ln("    ```python");
   ln("    # DOCX_EXPORT");
@@ -43,6 +68,16 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln("  - 응답 전체가 <!DOCTYPE html>로 시작하고 </html>로 끝나는 단일 HTML 파일");
   ln("  - 마크다운 코드펜스(```)나 설명 텍스트 절대 포함 금지");
   ln("  - 응답을 그대로 복사해 .html로 저장하면 브라우저에서 바로 열려야 함");
+  ln("  - ⚠️ 분할 출력(계속) 금지 — 1~15번 전체를 하나의 HTML 파일에 완결");
+  ln("  - 섹션 7(탐구활동 5개)은 아래 [HTML 압축 형식]으로 출력:");
+  ln();
+  ln("  [HTML 압축 형식 — 섹션 7 전용]");
+  ln("  활동 1~5 각각에 대해:");
+  ln("  · 메타정보(과목/성취기준/역량/연계/활용/결과물/평가/시간)는 그대로 표시");
+  ln("  · 10단계는 각 단계를 1~2문장(20~50자)으로 간결하게 서술");
+  ln("  · 10단계 전부(①~⑩) 빠짐없이 포함 — 생략·합치기 금지");
+  ln("  · 5개 활동 모두 동일 수준으로 완전히 작성 (축약·참조 금지)");
+  ln("  · 보고서 하단에 안내 추가: '※ 각 활동의 상세 10단계 설계는 텍스트(A) 모드로 출력하면 확인할 수 있습니다.'");
   ln();
   ln("  [HTML 필수 기능 1 — PDF 저장 버튼]");
   ln("  · 우측 상단 고정 툴바에 '📄 PDF 저장' 버튼 배치");
@@ -79,7 +114,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln("【 학생 기본 정보 】");
   ln("=" .repeat(60));
   ln(`성명      : ${name}`);
-  ln(`희망 분야 : ${major}`);
+  ln(`희망 학과 : ${major}`);
   ln(`학생 유형 : ${analysis.studentType?.label || '—'}`);
   ln(`성장 추세 : ${analysis.trend}`);
   ln(`분석일    : ${today}`);
@@ -256,7 +291,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln();
 
   ln("【 4. 전공 적합성 판정 】");
-  ln(`  희망 분야: ${major}`);
+  ln(`  희망 학과: ${major}`);
   ln("  판정 기준: 상(上) / 중(中) / 하(下)");
   ln("  직접 근거 2문장 + 보조 근거 1문장 + 3학년 보완 방향");
   ln();
@@ -273,18 +308,15 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
 
   ln("【 7. 맞춤 탐구활동 설계 5개 (3학년 대비) 】");
   ln();
-  ln("  ⚠️ 출력 방식: 이 섹션은 분량이 많으므로 반드시 분할 출력하세요.");
-  ln("  1~6번 + 활동 1~2 → 첫 번째 응답");
-  ln("  활동 3~5 → '계속' 입력 후 두 번째 응답");
-  ln("  8~15번 → '계속' 입력 후 세 번째 응답");
-  ln("  절대로 활동을 요약·축약·생략하여 한 번에 출력하지 마세요.");
+  ln("  · 텍스트 모드: 상단 분할 출력 규칙에 따라 활동 1~2 / 3~5로 나눠 출력");
+  ln("  · HTML 모드: 단일 파일에 5개 활동 전부 포함 (10단계 간결 서술)");
   ln();
 
   // ── 활동별 독립 스캐폴딩 (5회 반복이 아닌 5개 독립 블록) ──
   for (let i = 1; i <= 5; i++) {
-    ln(`  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`);
-    ln(`  ┃  ▶ 활동 ${i}                                       ┃`);
-    ln(`  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`);
+    ln(`  ==============================`);
+    ln(`  ▶ 활동 ${i}`);
+    ln(`  ==============================`);
     ln(`  · 탐구 주제:       (                              )`);
     ln(`  · 과목:            (                              )`);
     ln(`  · 성취기준 코드:   (예: [12물리Ⅱ01-03]            )`);
@@ -295,7 +327,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
     ln(`  · 평가 방법:       (과정 중심 평가 기준            )`);
     ln(`  · 예상 소요 시간:  (예: 3주, 총 12시간            )`);
     ln();
-    ln(`  ── 활동 ${i}의 10단계 탐구 흐름 (각 단계 2~3문장 서술) ──`);
+    ln(`  -- 활동 ${i}의 10단계 탐구 흐름 (텍스트: 2~3문장 / HTML: 1~2문장) --`);
     ln(`  ① 문제의식:   (                                    )`);
     ln(`  ② 질문 구체화: (                                    )`);
     ln(`  ③ 탐구 계획:   (                                    )`);
@@ -310,10 +342,11 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   }
 
   ln("  [10단계 서술 기준]");
-  ln("  · 각 단계는 반드시 2~3문장(40~80자)으로 구체적 상황·행동·결과를 서술");
-  ln("  · ①~④는 탐구 배경과 설계, ⑤~⑦은 수행과 분석, ⑧~⑩은 확산과 성장");
-  ln("  · '~함', '~했음' 같은 1문장 종결 금지 — 왜(Why)와 어떻게(How)를 포함할 것");
-  ln("  · 5개 활동은 서로 다른 교과·주제·역량을 다뤄야 함");
+  ln("  · 텍스트 모드: 각 단계 2~3문장(40~80자) — 구체적 상황·행동·결과 서술");
+  ln("  · HTML 모드:   각 단계 1~2문장(20~50자) — 핵심만 간결하게 서술");
+  ln("  · 공통: ①~④ 탐구 배경·설계, ⑤~⑦ 수행·분석, ⑧~⑩ 확산·성장");
+  ln("  · 공통: '~함' 같은 1문장 종결 금지 — Why와 How 포함");
+  ln("  · 공통: 5개 활동은 서로 다른 교과·주제·역량 (중복 금지)");
   ln();
 
   ln("【 8. 세특 초안 1개 (희망 전공 연계 과목, 1500바이트/한글 500자) 】");
@@ -346,7 +379,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
 
   ln("【 10. 강점 → 전공 의미 → 면접 활용 연결 구조 】");
   ln("  각 핵심 강점이 희망 전공에서 왜 중요한지 설명");
-  ln(`  희망 분야: ${major}`);
+  ln(`  희망 학과: ${major}`);
   ln("  형식: 강점명 → 전공에서의 의미 → 면접·자소서 활용 시나리오");
   ln("  입학사정관이 그 강점을 어떻게 평가할지 관점 포함");
   ln();
@@ -391,49 +424,46 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln(`※ 본 분석은 상담 보조자료이며 실제 대학 평가를 예측하지 않습니다.`);
   ln(`※ 생성: 모두의 생기부 분석기 v13 · ${today}`);
 
-  // ── 옵션 A+B: 대학자료 기반 맞춤 분석 (사용자 선택) ────────────────────────
-  // uniOptions: { universityName, departmentName, docType, material }
+  // ── 15번: 대학 맞춤 적합도 분석 (항상 출력, 대학 미선택 시 부산대 기본) ──
   const uniOpt = uniOptions || {};
   const uniMat = uniOpt.material || window.currentUniMaterial || window.currentUniMaterialComparison || null;
-  const uniName_sel = uniOpt.universityName || (uniMat && uniMat.universityName) || '';
-  const uniDept_sel = uniOpt.departmentName || (uniMat && uniMat.departmentName) || '';
+  const uniName_sel = uniOpt.universityName || (uniMat && uniMat.universityName) || '부산대학교';
+  const uniDept_sel = uniOpt.departmentName || (uniMat && uniMat.departmentName) || major;
   const uniDocType_sel = uniOpt.docType || '';
 
-  if (uniName_sel) {
-    ln();
-    ln("=".repeat(60));
-    ln("【 15. 지원 대학 맞춤 적합도 분석 】");
-    ln("=".repeat(60));
-    ln(`대학명: ${uniName_sel}`);
-    ln(`학과명: ${uniDept_sel || '—'}`);
-    if (uniMat && uniMat.admissionType) ln(`전형명: ${uniMat.admissionType}`);
-    if (uniDocType_sel) ln(`참고 자료: ${uniDocType_sel}`);
-    ln();
+  ln();
+  ln("=".repeat(60));
+  ln("【 15. 지원 대학 맞춤 적합도 분석 】");
+  ln("=".repeat(60));
+  ln(`대학명: ${uniName_sel}`);
+  ln(`학과명: ${uniDept_sel || '—'}`);
+  if (uniMat && uniMat.admissionType) ln(`전형명: ${uniMat.admissionType}`);
+  if (uniDocType_sel) ln(`참고 자료: ${uniDocType_sel}`);
+  ln();
 
-    if (uniMat && uniMat.evaluationElements?.length) {
-      ln(`평가요소: ${uniMat.evaluationElements.join(', ')}`);
-    }
-    if (uniMat && uniMat.recommendedSubjects?.length) {
-      ln(`권장과목: ${uniMat.recommendedSubjects.join(', ')}`);
-    }
-    if (uniMat && uniMat.cautions?.length) {
-      ln(`유의사항: ${uniMat.cautions.join(' / ')}`);
-    }
-    if (uniMat && uniMat.extractedSummary) {
-      ln();
-      ln("[ 대학 자료 요약 ]");
-      ln(uniMat.extractedSummary.slice(0, 3000));
-    }
-
-    ln();
-    ln("【 위 대학자료를 반영하여 다음 4가지를 분석하세요 】");
-    ln("  ① 이 학생의 활동이 해당 대학 평가요소에 얼마나 부합하는지 — 상/중/하로 판정 + 근거 제시");
-    ln("  ② 권장과목 이수 여부와 세특 연계성 확인 후 미이수·연계 부족 gap 명시");
-    ln("  ③ 유의사항(수능최저·면접 등)이 있다면 학생 현황과 비교하여 전략적 보완 방향 제시");
-    ln("  ④ 이 대학·전형 기준으로 [4. 전공 적합성 판정]과 [5. 리스크 점검]을 재조정한 최종 지원 적합도 — 상/중/하 + 한 줄 총평");
-    ln();
-    ln("  HTML 보고서 출력 시: 이 섹션을 별도 카드(파란 테두리)로 렌더링하고 섹션 번호 15로 표기");
+  if (uniMat && uniMat.evaluationElements?.length) {
+    ln(`평가요소: ${uniMat.evaluationElements.join(', ')}`);
   }
+  if (uniMat && uniMat.recommendedSubjects?.length) {
+    ln(`권장과목: ${uniMat.recommendedSubjects.join(', ')}`);
+  }
+  if (uniMat && uniMat.cautions?.length) {
+    ln(`유의사항: ${uniMat.cautions.join(' / ')}`);
+  }
+  if (uniMat && uniMat.extractedSummary) {
+    ln();
+    ln("[ 대학 자료 요약 ]");
+    ln(uniMat.extractedSummary.slice(0, 3000));
+  }
+
+  ln();
+  ln("【 위 대학자료를 반영하여 다음 4가지를 분석하세요 】");
+  ln("  ① 이 학생의 활동이 해당 대학 평가요소에 얼마나 부합하는지 — 상/중/하로 판정 + 근거 제시");
+  ln("  ② 권장과목 이수 여부와 세특 연계성 확인 후 미이수·연계 부족 gap 명시");
+  ln("  ③ 유의사항(수능최저·면접 등)이 있다면 학생 현황과 비교하여 전략적 보완 방향 제시");
+  ln("  ④ 이 대학·전형 기준으로 [4. 전공 적합성 판정]과 [5. 리스크 점검]을 재조정한 최종 지원 적합도 — 상/중/하 + 한 줄 총평");
+  ln();
+  ln("  HTML 보고서 출력 시: 이 섹션을 별도 카드(파란 테두리)로 렌더링하고 섹션 번호 15로 표기");
   // ── 대학자료 삽입 끝 ────────────────────────────────────────────────────────
 
   return L.join('\n');
