@@ -43,7 +43,7 @@ function renderAIPrompt(parsedData, info, analysis) {
   // 대학 선택 드롭다운
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">`;
   html += `<div>`;
-  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택(미선택시 부산대학교로 임의 지정)</label>`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택(미선택시 경북대학교로 임의 지정)</label>`;
   html += `<select id="prompt-uni-select" onchange="onPromptUniChange()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;cursor:pointer">`;
   html += `<option value="">— 선택 안 함 —</option>`;
 
