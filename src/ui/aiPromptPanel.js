@@ -38,6 +38,51 @@ function renderAIPrompt(parsedData, info, analysis) {
   }
   html += `</div></div>`;
 
+  // ── 대학 선택 (프롬프트 15번 섹션 연동) ──
+  html += `<div style="margin-bottom:14px;padding:14px 18px;background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--r)">`;
+  html += `<div style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+    🏫 대학별 맞춤 분석 (선택 시 프롬프트에 반영)
+  </div>`;
+
+  // 대학 선택 드롭다운
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">`;
+  html += `<div>`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택</label>`;
+  html += `<select id="prompt-uni-select" onchange="onPromptUniChange()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;cursor:pointer">`;
+  html += `<option value="">— 선택 안 함 —</option>`;
+
+  // 업로드된 대학자료에서 대학 목록 추출
+  const savedMats = (typeof getSavedUniMaterials === 'function') ? getSavedUniMaterials() : [];
+  const uniNames = [...new Set(savedMats.filter(m => m.universityName).map(m => m.universityName))];
+  for (const u of uniNames) {
+    html += `<option value="${u.replace(/"/g,'&quot;')}">${u.replace(/</g,'&lt;')}</option>`;
+  }
+  html += `</select>`;
+  html += `</div>`;
+
+  // 학과 입력
+  html += `<div>`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">학과 입력</label>`;
+  html += `<input type="text" id="prompt-uni-dept" placeholder="예: 기계공학과" oninput="updatePromptPreview()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;box-sizing:border-box">`;
+  html += `</div>`;
+  html += `</div>`;
+
+  // 자료 유형 선택 (대학 선택 시에만 표시)
+  html += `<div id="prompt-uni-doctype-wrap" style="display:none;margin-top:8px">`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:6px">참고 자료 선택</label>`;
+  html += `<div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  html += `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;background:var(--sur);border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;font-weight:600;color:var(--tx2)" id="lbl-prompt-doctype-seonhaeng">
+    <input type="radio" name="prompt-uni-doctype" value="선행학습영향평가보고서" style="accent-color:#3498db" checked onchange="updatePromptPreview()"> 📋 선행학습평가계획
+  </label>`;
+  html += `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;background:var(--sur);border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;font-weight:600;color:var(--tx2)" id="lbl-prompt-doctype-daeip">
+    <input type="radio" name="prompt-uni-doctype" value="2028대입시행계획" style="accent-color:#9b59b6" onchange="updatePromptPreview()"> 📖 2028대입시행계획
+  </label>`;
+  html += `</div>`;
+  html += `</div>`;
+
+  html += `<div id="prompt-uni-status" style="margin-top:8px;font-size:11px;color:var(--tx3)"></div>`;
+  html += `</div>`;
+
   html += `<div class="prompt-note">`;
   html += `📌 <b>사용 방법 안내</b><br>`;
   html += `1️⃣ 희망 분야를 입력합니다.<br>`;
@@ -84,6 +129,31 @@ function togglePromptExample() {
   if (btn) btn.textContent = visible ? '💡 출력 예시 보기' : '💡 예시 닫기';
 }
 
+function onPromptUniChange() {
+  const sel = document.getElementById('prompt-uni-select');
+  const doctypeWrap = document.getElementById('prompt-uni-doctype-wrap');
+  const statusEl = document.getElementById('prompt-uni-status');
+  if (!sel) return;
+
+  const uniName = sel.value;
+  if (doctypeWrap) doctypeWrap.style.display = uniName ? 'block' : 'none';
+
+  // 선택된 대학에 해당하는 자료 매칭 상태 표시
+  if (statusEl) {
+    if (!uniName) {
+      statusEl.textContent = '';
+    } else {
+      const savedMats = (typeof getSavedUniMaterials === 'function') ? getSavedUniMaterials() : [];
+      const matched = savedMats.filter(m => m.universityName === uniName);
+      statusEl.innerHTML = matched.length
+        ? `✅ ${uniName} 자료 ${matched.length}건 연동됨`
+        : `⚠️ ${uniName} 업로드 자료 없음 — 대학자료 탭에서 PDF를 먼저 업로드하세요`;
+    }
+  }
+
+  updatePromptPreview();
+}
+
 function updatePromptPreview() {
   const hopeInput = document.getElementById('prompt-hope-input');
   const output = document.getElementById('prompt-output');
@@ -105,7 +175,40 @@ function updatePromptPreview() {
     school: maskSchool ? _makeMaskedSchool(rawInfo.school) : (rawInfo.school || '—'),
   };
 
-  const prompt = v6BuildPromptForClaude(parsedData, info, analysis, hopeText);
+  // ── 대학 선택 옵션 수집 ──
+  const uniSelect = document.getElementById('prompt-uni-select');
+  const uniDept = document.getElementById('prompt-uni-dept');
+  const docTypeRadio = document.querySelector('input[name="prompt-uni-doctype"]:checked');
+  const selectedUniName = uniSelect?.value || '';
+
+  let uniOptions = null;
+  if (selectedUniName) {
+    // 선택된 대학에 매칭되는 저장 자료 찾기
+    const savedMats = (typeof getSavedUniMaterials === 'function') ? getSavedUniMaterials() : [];
+    const matchedMat = savedMats.find(m => m.universityName === selectedUniName) || null;
+
+    // 선택된 자료를 window에도 반영 (대학자료 섹션 렌더링용)
+    if (matchedMat) {
+      window.currentUniMaterial = matchedMat;
+      if (typeof compareStudentWithUniMaterial === 'function') {
+        window.currentUniMaterialComparison = compareStudentWithUniMaterial(
+          matchedMat,
+          typeof parsedData !== 'undefined' ? parsedData : null,
+          typeof v6Analysis !== 'undefined' ? v6Analysis : null,
+          typeof takenSubjects !== 'undefined' ? takenSubjects : null
+        );
+      }
+    }
+
+    uniOptions = {
+      universityName: selectedUniName,
+      departmentName: uniDept?.value || '',
+      docType: docTypeRadio?.value || '',
+      material: matchedMat,
+    };
+  }
+
+  const prompt = v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions);
   output.textContent = prompt;
 
   // 대학자료 섹션도 함께 갱신
@@ -113,26 +216,40 @@ function updatePromptPreview() {
 }
 
 function copyPromptToClipboard() {
-  const output = document.getElementById('prompt-output');
+  const output  = document.getElementById('prompt-output');
   if (!output || !output.textContent) return;
 
-  navigator.clipboard.writeText(output.textContent).then(() => {
+  // ── 옵션 C: 대학자료 추가문 자동 합치기 ──────────────────────────────────
+  const uniAddonEl = document.getElementById('uni-addon-text');
+  const mainPrompt = output.textContent;
+  const uniAddon   = uniAddonEl?.value?.trim() || '';
+  const combined   = uniAddon
+    ? mainPrompt + '\n\n' + uniAddon
+    : mainPrompt;
+  const hasUni     = !!uniAddon;
+  // ── 합치기 끝 ──────────────────────────────────────────────────────────────
+
+  const successMsg = hasUni
+    ? '✅ 프롬프트 + 대학자료가 함께 복사되었습니다! Claude에 붙여넣기 하세요.'
+    : '✅ 프롬프트가 클립보드에 복사되었습니다! Claude에 붙여넣기 하세요.';
+
+  navigator.clipboard.writeText(combined).then(() => {
     const toast = document.createElement('div');
     toast.className = 'copy-toast';
-    toast.textContent = '✅ 프롬프트가 클립보드에 복사되었습니다! Claude에 붙여넣기 하세요.';
+    toast.textContent = successMsg;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }).catch(() => {
     // fallback
     const ta = document.createElement('textarea');
-    ta.value = output.textContent;
+    ta.value = combined;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     ta.remove();
     const toast = document.createElement('div');
     toast.className = 'copy-toast';
-    toast.textContent = '✅ 프롬프트가 복사되었습니다!';
+    toast.textContent = hasUni ? '✅ 프롬프트 + 대학자료 복사 완료!' : '✅ 프롬프트가 복사되었습니다!';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   });

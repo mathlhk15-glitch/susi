@@ -427,6 +427,8 @@
     let compareResult = null;
     if (_currentMaterialId && savedMaterials.length) {
       const mat = savedMaterials.find(m => m.id === _currentMaterialId) || savedMaterials[0];
+      // ── [FIX] 선택된 대학자료를 window에 저장 → promptBuilder.js에서 참조 가능 ──
+      window.currentUniMaterial = mat || null;
       if (mat && typeof compareStudentWithUniMaterial === 'function') {
         compareResult = compareStudentWithUniMaterial(
           mat,
@@ -434,7 +436,14 @@
           typeof v6Analysis !== 'undefined' ? v6Analysis : null,
           typeof takenSubjects !== 'undefined' ? takenSubjects : null
         );
+        // ── [FIX] 비교 결과도 window에 저장 → promptBuilder / aiPromptPanel에서 참조 가능 ──
+        window.currentUniMaterialComparison = compareResult || null;
+      } else {
+        window.currentUniMaterialComparison = null;
       }
+    } else {
+      window.currentUniMaterial = null;
+      window.currentUniMaterialComparison = null;
     }
 
     bd.innerHTML = `
