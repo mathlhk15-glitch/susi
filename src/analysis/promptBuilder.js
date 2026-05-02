@@ -427,7 +427,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   // ── 15번: 대학 맞춤 적합도 분석 (항상 출력, 대학 미선택 시 부산대 기본) ──
   const uniOpt = uniOptions || {};
   const uniMat = uniOpt.material || window.currentUniMaterial || window.currentUniMaterialComparison || null;
-  const uniName_sel = uniOpt.universityName || (uniMat && uniMat.universityName) || '부산대학교';
+  const uniName_sel = uniOpt.universityName || (uniMat && uniMat.universityName) || '경희대학교';
   const uniDept_sel = uniOpt.departmentName || (uniMat && uniMat.departmentName) || major;
   const uniDocType_sel = uniOpt.docType || '';
 
