@@ -424,7 +424,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln(`※ 본 분석은 상담 보조자료이며 실제 대학 평가를 예측하지 않습니다.`);
   ln(`※ 생성: 모두의 생기부 분석기 v13 · ${today}`);
 
-  // ── 15번: 대학 맞춤 적합도 분석 (항상 출력, 대학 미선택 시 부산대 기본) ──
+  // ── 15번: 대학 맞춤 적합도 분석 (항상 출력, 대학 미선택 시 경희대 기본) ──
   const uniOpt = uniOptions || {};
   const uniMat = uniOpt.material || window.currentUniMaterial || window.currentUniMaterialComparison || null;
   const uniName_sel = uniOpt.universityName || (uniMat && uniMat.universityName) || '경희대학교';

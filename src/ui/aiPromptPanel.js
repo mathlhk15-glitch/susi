@@ -43,7 +43,7 @@ function renderAIPrompt(parsedData, info, analysis) {
   // 대학 선택 드롭다운
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">`;
   html += `<div>`;
-  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택(미선택시 경북대학교로 임의 지정)</label>`;
+  html += `<label style="font-size:11px;font-weight:700;color:var(--tx3);display:block;margin-bottom:4px">대학 선택(미선택시 경희대학교로 임의 지정)</label>`;
   html += `<select id="prompt-uni-select" onchange="onPromptUniChange()" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--sur);color:var(--tx);outline:none;cursor:pointer">`;
   html += `<option value="">— 선택 안 함 —</option>`;
 
@@ -83,16 +83,7 @@ function renderAIPrompt(parsedData, info, analysis) {
   html += `📌 <b>사용 방법 안내</b><br>`;
   html += `1️⃣ 희망 분야를 입력합니다.<br>`;
   html += `2️⃣ <b>'복사 → GPT/Claude에 붙여넣기'</b> 버튼을 클릭합니다.<br>`;
-  html += `3️⃣ GPT 또는 Claude를 실행하여 <b>붙여넣기</b>합니다. <span style="
-  color:#b02a37;
-  background:#fdeaee;
-  padding:3px 8px;
-  border-radius:6px;
-  font-weight:700;
-  border:1px solid #f5c6cb;
-">
-HTML 문서 생성을 원하면 Claude 사용을 권장합니다.
-</span><br>`;
+  html += `3️⃣ GPT 또는 Claude를 실행하여 <b>붙여넣기</b>합니다. <b>HTML 문서 생성을 원하면 Claude 사용을 권장합니다.</b><br>`;
   html += `4️⃣ 그대로 실행하면 <b>입시 분석 보고서</b>가 생성됩니다.<br><br>`;
   html += `⚠️ 출력 형식 질문이 나오면 반드시 <b>[A] 텍스트</b> 또는 <b>[B] HTML</b>을 입력하세요.<br>`;
   html += `<span style="font-size:11px;color:#888">※ Claude 사용 시 가장 안정적인 결과가 출력됩니다.</span>`;
@@ -210,6 +201,29 @@ function updatePromptPreview() {
       departmentName: uniDept?.value || '',
       docType: docTypeRadio?.value || '',
       material: matchedMat,
+    };
+  } else {
+    // 대학 미선택 시 경희대학교 자료 자동 매칭
+    const savedMats = (typeof getSavedUniMaterials === 'function') ? getSavedUniMaterials() : [];
+    const fallbackMat = savedMats.find(m => m.universityName && m.universityName.includes('경희대')) || null;
+
+    if (fallbackMat) {
+      window.currentUniMaterial = fallbackMat;
+      if (typeof compareStudentWithUniMaterial === 'function') {
+        window.currentUniMaterialComparison = compareStudentWithUniMaterial(
+          fallbackMat,
+          typeof parsedData !== 'undefined' ? parsedData : null,
+          typeof v6Analysis !== 'undefined' ? v6Analysis : null,
+          typeof takenSubjects !== 'undefined' ? takenSubjects : null
+        );
+      }
+    }
+
+    uniOptions = {
+      universityName: '경희대학교',
+      departmentName: uniDept?.value || '',
+      docType: '',
+      material: fallbackMat,
     };
   }
 
