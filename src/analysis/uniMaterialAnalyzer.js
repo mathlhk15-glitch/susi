@@ -142,7 +142,7 @@ function extractUniversityNameFromText(text, fileName) {
   const raw = String(text || '');
   const fname = String(fileName || '');
 
-  // 텍스트도 파일명도 없으면 종료
+  // 텍스트/파일명 둘 다 없으면 종료
   if (!raw && !fname) return '';
 
   const len = raw.length || 1;
@@ -158,6 +158,11 @@ function extractUniversityNameFromText(text, fileName) {
   // 후보 점수판
   const scores = Object.create(null);
   const reasons = Object.create(null);
+
+  // ✅ 파일명 기반 최상위 후보 추적 (핵심)
+  let fileTopCandidate = '';
+  let fileTopScore = 0;
+
   const addScore = (name, score, reason) => {
     if (!name) return;
     scores[name] = (scores[name] || 0) + score;
@@ -165,118 +170,163 @@ function extractUniversityNameFromText(text, fileName) {
     reasons[name].push(reason);
   };
 
-  // 0) 파일명 후보를 최우선 반영 (강한 가중치)
-  // 예: "창원대학교_2026수시모집요강.pdf", "부산대-전형안내.pdf"
+  // 파일명에서 얻은 점수는 별도로 top 후보 추적
+  const addFileScore = (name, score, reason) => {
+    addScore(name, score, reason);
+    const s = scores[name] || 0;
+    if (s > fileTopScore) {
+      fileTopScore = s;
+      fileTopCandidate = name;
+    }
+  };
+
+  // ─────────────────────────────────────
+  // 0) 파일명 후보 최우선 반영
+  // ─────────────────────────────────────
   if (fname) {
+    // sourceTitle에서 확장자 제거 + 앞쪽 [문서유형] 라벨 정리
+    const cleanedFname = fname
+      .replace(/\.[^.]+$/, '')            // .pdf 등 확장자 제거
+      .replace(/^\[[^\]]+\]\s*/g, '')     // "[기타 입학자료] " 제거
+      .trim();
+
     // 0-1) KNOWN_UNIS 정확 매치
     for (const name of KNOWN_UNIS) {
-      if (fname.includes(name)) {
-        addScore(name, 60, `fileKnown:${name}`);
+      if (cleanedFname.includes(name)) {
+        addFileScore(name, 80, `fileKnown:${name}`);
       }
     }
 
     // 0-2) 정식명 패턴
-    const fnFullRe = /([가-힣]{2,8}(?:대학교|대학원대학교|교육대학교|과학기술원))/g;
+    const fnFullRe = /([가-힣]{2,12}(?:대학교|대학원대학교|교육대학교|과학기술원))/g;
     let fm1;
-    while ((fm1 = fnFullRe.exec(fname)) !== null) {
+    while ((fm1 = fnFullRe.exec(cleanedFname)) !== null) {
       const cand = fm1[1];
-      let s = 40;
-      if (KNOWN_UNIS.includes(cand)) s += 10;
-      addScore(cand, s, `fileFull:${cand}`);
+      let s = 50;
+      if (KNOWN_UNIS.includes(cand)) s += 15;
+      addFileScore(cand, s, `fileFull:${cand}`);
     }
 
-    // 0-3) 약칭 패턴 (파일명에서도 낮은 점수, 단 KNOWN 매핑 시만 사용)
-    const fnShortRe = /(^|[\s_\-\(\["'“”‘’,.])([가-힣]{2,6}대)(?=$|[\s_\-\)\]"'“”‘’,.])/g;
+    // 0-3) 약칭 패턴(OO대, OO교대, KAIST/POSTECH/UNIST/GIST/DGIST)
+    const fnShortRe = /(^|[\s_\-\(\)\[\]"'“”‘’,.])([가-힣]{2,8}(?:대|교대)|KAIST|POSTECH|UNIST|GIST|DGIST)(?=$|[\s_\-\(\)\[\]"'“”‘’,.0-9])/gi;
     let fm2;
-    while ((fm2 = fnShortRe.exec(fname)) !== null) {
-      const short = fm2[2];
-      const base = short.replace(/대$/, '');
-      const mapped = KNOWN_UNIS.find(u => u.startsWith(base) || u.includes(base));
-      if (mapped) addScore(mapped, 18, `fileAbbr:${short}`);
+    while ((fm2 = fnShortRe.exec(cleanedFname)) !== null) {
+      const shortRaw = fm2[2];
+      const short = shortRaw.toUpperCase();
+
+      // 영문 특수 대학 약칭
+      if (['KAIST', 'POSTECH', 'UNIST', 'GIST', 'DGIST'].includes(short)) {
+        const mapped = KNOWN_UNIS.find(u => u.toUpperCase() === short || u.includes(short));
+        if (mapped) addFileScore(mapped, 35, `fileAbbrEn:${short}`);
+        continue;
+      }
+
+      // 한글 약칭 매핑
+      let mapped = '';
+      if (shortRaw.endsWith('교대')) {
+        const base = shortRaw.replace(/교대$/, '');
+        mapped = KNOWN_UNIS.find(u =>
+          u.startsWith(base) && u.includes('교육대학교')
+        ) || '';
+      } else {
+        const base = shortRaw.replace(/대$/, '');
+
+        // ✅ "경북대"가 "대구경북과학기술원"으로 잘못 가는 것 방지
+        // 1순위: "base + 대학교" 정확형
+        mapped = KNOWN_UNIS.find(u => u === `${base}대학교`) || '';
+
+        // 2순위: base로 시작하는 학교
+        if (!mapped) {
+          mapped = KNOWN_UNIS.find(u => u.startsWith(base) && /대학교|교육대학교|과학기술원/.test(u)) || '';
+        }
+
+        // 3순위: includes는 마지막 (오탐 위험)
+        if (!mapped) {
+          mapped = KNOWN_UNIS.find(u => u.includes(base) && /대학교|교육대학교|과학기술원/.test(u)) || '';
+        }
+      }
+
+      if (mapped) addFileScore(mapped, 30, `fileAbbr:${shortRaw}`);
     }
   }
 
-  // 1) KNOWN_UNIS 다중 수집 + 위치/문맥 점수
+  // ✅ 파일명에서 충분히 강한 후보가 있으면 즉시 반환 (본문 노이즈 무시)
+  if (fileTopCandidate && fileTopScore >= 30) {
+    return fileTopCandidate;
+  }
+
+  // ─────────────────────────────────────
+  // 1) 본문 KNOWN_UNIS 다중 수집 + 위치/문맥 점수
+  // ─────────────────────────────────────
   for (const name of KNOWN_UNIS) {
     let from = 0;
     while (true) {
       const idx = raw.indexOf(name, from);
       if (idx === -1) break;
 
-      // 기본점수: 알려진 대학명 정확일치
-      let s = 8;
+      let s = 8; // 알려진 대학명 정확일치 기본점수
 
-      // 초반부 가중치 (앞 20% 매우 우대, 40% 우대)
       const pos = idx / len;
       if (pos <= 0.20) s += 5;
       else if (pos <= 0.40) s += 2;
 
-      // 입시 문맥 근처 가중치
       if (aroundHasContext(idx, name.length)) s += 4;
 
-      // 반복 등장 보너스(소폭)
-      s += 1;
+      s += 1; // 반복 등장 소폭 보너스
 
       addScore(name, s, `known@${idx}`);
       from = idx + name.length;
     }
   }
 
-  // 2) 일반 정규식 후보(OO대학교 등) 수집
-  const fullRe = /([가-힣]{2,8}(?:대학교|대학원대학교|교육대학교|과학기술원))/g;
+  // 2) 일반 정규식 후보(OO대학교 등)
+  const fullRe = /([가-힣]{2,12}(?:대학교|대학원대학교|교육대학교|과학기술원))/g;
   let m1;
   while ((m1 = fullRe.exec(raw)) !== null) {
     const cand = m1[1];
     const idx = m1.index;
 
-    let s = 4; // KNOWN_UNIS보다 낮게 시작
+    let s = 4;
     const pos = idx / len;
     if (pos <= 0.20) s += 3;
     else if (pos <= 0.40) s += 1;
     if (aroundHasContext(idx, cand.length)) s += 3;
-
-    // KNOWN_UNIS에 있으면 신뢰도 추가
     if (KNOWN_UNIS.includes(cand)) s += 2;
 
     addScore(cand, s, `regexFull@${idx}`);
   }
 
-  // 3) 약칭 후보(OO대) 수집 — 낮은 점수(강확정 금지)
-  // 공백/구두점/줄끝 허용
-  const shortRe = /(^|\s|[\(\["'“”‘’,.])([가-힣]{2,6}대)(?=\s|$|[\)\]"'“”‘’,.])/g;
+  // 3) 약칭 후보(OO대) — 낮은 점수
+  const shortRe = /(^|\s|[\(\)\[\]"'“”‘’,.])([가-힣]{2,8}대)(?=\s|$|[\(\)\[\]"'“”‘’,.0-9])/g;
   let m2;
   while ((m2 = shortRe.exec(raw)) !== null) {
     const short = m2[2];
     const idx = m2.index + (m2[1] ? m2[1].length : 0);
 
-    let s = 1; // 매우 낮은 시작점
+    let s = 1;
     const pos = idx / len;
     if (pos <= 0.20) s += 1;
     if (aroundHasContext(idx, short.length)) s += 1;
 
-    // 약칭→KNOWN_UNIS 매핑(부분 일치) 시에만 소폭 가점
     const base = short.replace(/대$/, '');
-    const mapped = KNOWN_UNIS.find(u => u.startsWith(base) || u.includes(base));
+    let mapped = KNOWN_UNIS.find(u => u === `${base}대학교`) || '';
+    if (!mapped) mapped = KNOWN_UNIS.find(u => u.startsWith(base)) || '';
+    if (!mapped) mapped = KNOWN_UNIS.find(u => u.includes(base)) || '';
+
     if (mapped) {
       addScore(mapped, s + 1, `abbr:${short}@${idx}`);
     } else {
-      // 매핑 불가 약칭은 추정치로만 보관 (최종 확정 거의 불가)
       addScore(short + '학교(추정)', s, `abbrUnknown:${short}@${idx}`);
     }
   }
 
-  // 후보가 없으면 미확인
   const entries = Object.entries(scores);
   if (!entries.length) return '';
 
-  // 최고점/차점 비교
   entries.sort((a, b) => b[1] - a[1]);
   const [bestName, bestScore] = entries[0];
   const secondScore = entries[1] ? entries[1][1] : -Infinity;
 
-  // 확신도 게이트:
-  // - 절대점수가 너무 낮으면 미확인
-  // - 1/2위 점수차가 너무 작으면 미확인(오탐 방지)
   const isAbbrGuess = /학교\(추정\)$/.test(bestName);
   const minScore = isAbbrGuess ? 6 : 9;
   const minGap = 2;
@@ -286,7 +336,6 @@ function extractUniversityNameFromText(text, fileName) {
 
   return bestName;
 }
-
   /**
    * extractDepartmentNameFromText(text)
    * 학과·학부·전공 표현을 탐지
