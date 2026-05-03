@@ -139,11 +139,13 @@
    * 알려진 대학명 목록 → 접미사 패턴 → 정규식 순으로 탐지
    */
 function extractUniversityNameFromText(text, fileName) {
-  if (!text) return '';
-
-  const raw = String(text);
-  const len = raw.length || 1;
+  const raw = String(text || '');
   const fname = String(fileName || '');
+
+  // 텍스트도 파일명도 없으면 종료
+  if (!raw && !fname) return '';
+
+  const len = raw.length || 1;
 
   // 문서 초반부 가중치 + 입시 문맥 가중치
   const CONTEXT_RE = /(입학|모집요강|전형|수시|정시|학생부종합)/;
@@ -484,20 +486,26 @@ function extractUniversityNameFromText(text, fileName) {
         ? lines.filter(l => (typeof l === 'object' ? (l.page || 1) : 1) <= pageLimit)
         : lines;
 
-      // ── 전체 텍스트 합치기 ──
-      const fullText = linesToText(filteredLines);
+     // ── 전체 텍스트 합치기 ──
+const fullText = linesToText(filteredLines);
 
-      if (!fullText.trim()) return result;
+// ✅ 텍스트가 비어도 파일명(sourceTitle) 기준 대학명 추출은 시도
+if (!fullText.trim()) {
+  result.universityName = extractUniversityNameFromText('', options.sourceTitle || '');
+  result.sourceText = result.universityName || (options.sourceTitle || '');
+  result.extractedSummary = '';
+  return result;
+}
 
-      // ── 각 항목 추출 ──
-      result.universityName      = extractUniversityNameFromText(fullText);
-      result.departmentName      = extractDepartmentNameFromText(fullText);
-      result.admissionType       = extractAdmissionTypeFromText(fullText);
-      result.sourceYear          = extractSourceYearFromText(fullText);
-      result.evaluationElements  = extractEvaluationElementsFromText(fullText);
-      result.recommendedSubjects = extractRecommendedSubjectsFromText(fullText);
-      result.keywords            = extractUniMaterialKeywords(fullText);
-      result.cautions            = extractCautionsFromText(fullText);
+// ── 각 항목 추출 ──
+result.universityName      = extractUniversityNameFromText(fullText, options.sourceTitle || '');
+result.departmentName      = extractDepartmentNameFromText(fullText);
+result.admissionType       = extractAdmissionTypeFromText(fullText);
+result.sourceYear          = extractSourceYearFromText(fullText);
+result.evaluationElements  = extractEvaluationElementsFromText(fullText);
+result.recommendedSubjects = extractRecommendedSubjectsFromText(fullText);
+result.keywords            = extractUniMaterialKeywords(fullText);
+result.cautions            = extractCautionsFromText(fullText);
 
       // ── sourceText: 대학명·학과명·전형명 조합으로 출처 표시용 문자열 생성 ──
       const parts = [
