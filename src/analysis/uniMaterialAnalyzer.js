@@ -138,11 +138,12 @@
    * extractUniversityNameFromText(text)
    * 알려진 대학명 목록 → 접미사 패턴 → 정규식 순으로 탐지
    */
- function extractUniversityNameFromText(text) {
+function extractUniversityNameFromText(text, fileName) {
   if (!text) return '';
 
   const raw = String(text);
   const len = raw.length || 1;
+  const fname = String(fileName || '');
 
   // 문서 초반부 가중치 + 입시 문맥 가중치
   const CONTEXT_RE = /(입학|모집요강|전형|수시|정시|학생부종합)/;
@@ -161,6 +162,37 @@
     if (!reasons[name]) reasons[name] = [];
     reasons[name].push(reason);
   };
+
+  // 0) 파일명 후보를 최우선 반영 (강한 가중치)
+  // 예: "창원대학교_2026수시모집요강.pdf", "부산대-전형안내.pdf"
+  if (fname) {
+    // 0-1) KNOWN_UNIS 정확 매치
+    for (const name of KNOWN_UNIS) {
+      if (fname.includes(name)) {
+        addScore(name, 60, `fileKnown:${name}`);
+      }
+    }
+
+    // 0-2) 정식명 패턴
+    const fnFullRe = /([가-힣]{2,8}(?:대학교|대학원대학교|교육대학교|과학기술원))/g;
+    let fm1;
+    while ((fm1 = fnFullRe.exec(fname)) !== null) {
+      const cand = fm1[1];
+      let s = 40;
+      if (KNOWN_UNIS.includes(cand)) s += 10;
+      addScore(cand, s, `fileFull:${cand}`);
+    }
+
+    // 0-3) 약칭 패턴 (파일명에서도 낮은 점수, 단 KNOWN 매핑 시만 사용)
+    const fnShortRe = /(^|[\s_\-\(\["'“”‘’,.])([가-힣]{2,6}대)(?=$|[\s_\-\)\]"'“”‘’,.])/g;
+    let fm2;
+    while ((fm2 = fnShortRe.exec(fname)) !== null) {
+      const short = fm2[2];
+      const base = short.replace(/대$/, '');
+      const mapped = KNOWN_UNIS.find(u => u.startsWith(base) || u.includes(base));
+      if (mapped) addScore(mapped, 18, `fileAbbr:${short}`);
+    }
+  }
 
   // 1) KNOWN_UNIS 다중 수집 + 위치/문맥 점수
   for (const name of KNOWN_UNIS) {
