@@ -114,7 +114,11 @@
     `;
 
     document.body.appendChild(overlay);
-    setTimeout(() => document.getElementById('site-pw-input')?.focus(), 120);
+    // 렌더링 직후 비밀번호 입력창에 커서 포커스 (깜빡임 즉시 시작)
+    requestAnimationFrame(() => {
+      const input = document.getElementById('site-pw-input');
+      if (input) input.focus();
+    });
 
     document.getElementById('site-pw-submit').onclick = async function () {
       const pw    = document.getElementById('site-pw-input').value;
