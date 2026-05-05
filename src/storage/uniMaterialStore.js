@@ -69,14 +69,27 @@
       if (!raw) return { gistId: DEFAULT_GIST_ID, token: '' };
       const cfg = JSON.parse(raw);
       if (!cfg || !cfg.gistId) return { gistId: DEFAULT_GIST_ID, token: '' };
-      return cfg;
+      // _t: 새 형식(Base64 인코딩), token: 구 형식(평문) 하위 호환
+      const token = cfg._t ? _decodeToken(cfg._t) : (cfg.token || '');
+      return { gistId: cfg.gistId, token };
     } catch (e) {
       return { gistId: DEFAULT_GIST_ID, token: '' };
     }
   }
 
+  // ── 토큰 난독화 (평문 저장 최소화: Base64 인코딩) ───────────────
+  // 주의: Base64는 암호화가 아닙니다. 토큰을 공용 PC에 저장하지 마세요.
+  function _encodeToken(token) {
+    if (!token) return '';
+    try { return btoa(unescape(encodeURIComponent(token))); } catch (e) { return ''; }
+  }
+  function _decodeToken(encoded) {
+    if (!encoded) return '';
+    try { return decodeURIComponent(escape(atob(encoded))); } catch (e) { return ''; }
+  }
+
   function setGistConfig(gistId, token) {
-    localStorage.setItem(GIST_CFG_KEY, JSON.stringify({ gistId, token: token || '' }));
+    localStorage.setItem(GIST_CFG_KEY, JSON.stringify({ gistId, _t: _encodeToken(token || '') }));
   }
 
   function clearGistConfig() {

@@ -343,32 +343,52 @@ function extractUniversityNameFromText(text, fileName) {
   function extractDepartmentNameFromText(text) {
     if (!text) return '';
 
-    // "OO학과", "OO학부", "OO전공", "OO계열" 패턴
+    // ── 노이즈 접두어: 단과대·행정·전형 문맥에서 나타나는 비학과명 ──
+    // 주의: 소프트웨어·SW·AI·디지털 등은 실제 학부명에도 쓰이므로 제외
+    const NOISE_PREFIX = /^(?:입학|전형|모집)/;
+    // ── 노이즈 완전일치: 그 자체가 학과명이 아닌 단어 ──
+    const NOISE_EXACT  = new Set(['자연계열','인문계열','예체능계열','자연대학','인문대학','공과대학','사범대학','경영대학','사회과학대학','생활과학대학','국제대학','의과대학','치과대학','약학대학','간호대학','대학원']);
+
+    // 공백 미포함 패턴, 접미사는 학과·학부·전공만 (대학·학원 제외)
+    // 접두부 최소 1자: '의학과', '법학과' 등 짧은 학과명 허용
     const patterns = [
-      /([가-힣a-zA-Z·\s]{2,20}(?:학과|학부|전공|계열|대학|학원))/g,
+      /([가-힣a-zA-Z·]{1,20}(?:학과|학부))/g,   // 1순위: 학과·학부 (가장 구체적)
+      /([가-힣a-zA-Z·]{2,20}전공)/g,              // 2순위: 전공 (최소 2자 — '전공' 단독 방지)
+      /([가-힣a-zA-Z·]{3,20}계열)/g,              // 3순위: 계열 (최소 3자 — '자연계열' 등 EXACT로 걸러냄)
     ];
 
+    const seen = new Set();
     const candidates = [];
+
     for (const re of patterns) {
-      let m;
       re.lastIndex = 0;
+      let m;
       while ((m = re.exec(text)) !== null) {
         const cand = normalizeWS(m[1]);
-        // 너무 길거나 "대학교" 자체가 걸리는 경우 제외
-        if (cand.length <= 20 && !cand.endsWith('대학교') && !cand.endsWith('대학원대학교')) {
-          candidates.push(cand);
-        }
+        if (seen.has(cand)) continue;
+        seen.add(cand);
+
+        // 길이 초과 제외
+        if (cand.length > 20) continue;
+        // 대학교·대학원대학교로 끝나는 대학명 제외
+        if (/(?:대학교|대학원대학교)$/.test(cand)) continue;
+        // 노이즈 완전일치 제외
+        if (NOISE_EXACT.has(cand)) continue;
+        // 노이즈 접두어 제외
+        if (NOISE_PREFIX.test(cand)) continue;
+
+        candidates.push(cand);
       }
     }
 
-    // 가장 짧고 구체적인 것 선택 (학과 > 학부 > 전공 > 계열 순)
-    const priority = ['학과','전공','학부','계열','대학'];
+    // 우선순위: 학과 > 학부 > 전공 > 계열, 동일 suffix면 짧은 것 우선
+    const priority = ['학과','학부','전공','계열'];
     for (const suffix of priority) {
-      const match = candidates.find(c => c.endsWith(suffix));
-      if (match) return match;
+      const matches = candidates.filter(c => c.endsWith(suffix));
+      if (matches.length) return matches.reduce((a, b) => a.length <= b.length ? a : b);
     }
 
-    return candidates[0] || '';
+    return '';
   }
 
   /**
@@ -1047,28 +1067,10 @@ result.cautions            = extractCautionsFromText(fullText);
   }
 
   // ─────────────────────────────────────
-  //  전역 노출
+  //  전역 노출 (외부에서 실제로 호출하는 함수만)
   // ─────────────────────────────────────
-  window.analyzeUniMaterialLines            = analyzeUniMaterialLines;
-  window.extractUniversityNameFromText      = extractUniversityNameFromText;
-  window.extractDepartmentNameFromText      = extractDepartmentNameFromText;
-  window.extractAdmissionTypeFromText       = extractAdmissionTypeFromText;
-  window.extractSourceYearFromText          = extractSourceYearFromText;
-  window.extractEvaluationElementsFromText  = extractEvaluationElementsFromText;
-  window.extractRecommendedSubjectsFromText = extractRecommendedSubjectsFromText;
-  window.extractUniMaterialKeywords         = extractUniMaterialKeywords;
-  window.extractCautionsFromText            = extractCautionsFromText;
-  window.buildUniMaterialSummary            = buildUniMaterialSummary;
-
-  // 비교 엔진
-  window.collectStudentKeywords             = collectStudentKeywords;
-  window.collectStudentSubjects             = collectStudentSubjects;
-  window.findMatchedKeywords                = findMatchedKeywords;
-  window.findMissingKeywords                = findMissingKeywords;
-  window.buildUniStrengths                  = buildUniStrengths;
-  window.buildUniWeaknesses                 = buildUniWeaknesses;
-  window.buildRecommendedInquiryActivities  = buildRecommendedInquiryActivities;
-  window.buildUniPromptAddon                = buildUniPromptAddon;
-  window.compareStudentWithUniMaterial      = compareStudentWithUniMaterial;
+  window.analyzeUniMaterialLines       = analyzeUniMaterialLines;
+  window.buildUniMaterialSummary       = buildUniMaterialSummary;
+  window.compareStudentWithUniMaterial = compareStudentWithUniMaterial;
 
 })();
