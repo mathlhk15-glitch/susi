@@ -81,28 +81,39 @@
 </div>
 <!-- ① 항상 보이는 메뉴: 입시탐색기 (PDF·관리자 불필요) -->
 <div class="sb-nav" id="sb-nav-always" style="display:block">
-<span class="sb-lbl">입시 탐색기</span>
+<span class="sb-lbl" onclick="toggleNav(this)">입시 탐색기</span>
 <div class="sb-ni" onclick="switchTab('admission5')"><div class="sb-pip" style="background:#58a6ff"></div>🎓 1·2학년 5등급 기준<span class="sb-cnt">2022</span></div>
 <div class="sb-ni" onclick="switchTab('admission9')"><div class="sb-pip" style="background:#ffa657"></div>🎓 3학년 9등급 기준<span class="sb-cnt">2015</span></div>
 </div>
+<!-- 바로가기 사이트 -->
+<div class="sb-nav" id="sb-nav-shortcuts" style="display:block">
+<span class="sb-lbl" onclick="toggleNav(this)">🔗 바로가기 사이트</span>
+<div class="sb-ni" onclick="window.open('https://mathlhk15-glitch.github.io/lhk15/', '_blank')"><div class="sb-pip" style="background:#9b59b6"></div>진로진학허브</div>
+<div class="sb-ni" onclick="window.open('https://www.adiga.kr', '_blank')"><div class="sb-pip" style="background:#e67e22"></div>대학어디가</div>
+<div class="sb-ni" onclick="window.open('https://www.academyinfo.go.kr', '_blank')"><div class="sb-pip" style="background:#27ae60"></div>대학알리미</div>
+<div class="sb-ni" onclick="window.open('https://www.career.go.kr/', '_blank')"><div class="sb-pip" style="background:#2980b9"></div>커리어넷</div>
+<div class="sb-ni" onclick="window.open('https://www.work24.go.kr/', '_blank')"><div class="sb-pip" style="background:#8e44ad"></div>워크넷</div>
+<div class="sb-ni" onclick="window.open('https://www.ggoomgil.go.kr/', '_blank')"><div class="sb-pip" style="background:#f39c12"></div>꿈길</div>
+<div class="sb-ni" onclick="window.open('https://xn--vk1bt41a12ci0t.com/univ-admission-search/', '_blank')"><div class="sb-pip" style="background:#e74c3c"></div>입시자료오음</div>
+</div>
 <!-- ② 관리자 로그인 시 보이는 메뉴: 대학자료 분석 (PDF 불필요) -->
 <div class="sb-nav" id="sb-nav-admin" style="display:none">
-<span class="sb-lbl">관리자 전용</span>
+<span class="sb-lbl" onclick="toggleNav(this)">관리자 전용</span>
 <div class="sb-ni" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni">—</span></div>
 </div>
 <!-- ③ PDF 업로드 후 보이는 메뉴 -->
 <div class="sb-nav" id="sb-nav" style="display:none">
-<span class="sb-lbl">영역별 탐구활동</span>
+<span class="sb-lbl" onclick="toggleNav(this)">영역별 탐구활동</span>
 <div class="sb-ni active" onclick="switchTab('subject')"><div class="sb-pip" style="background:var(--cs)"></div>교과 탐구활동<span class="sb-cnt" id="snc-s">0</span></div>
 <div class="sb-ni" onclick="switchTab('auto')"><div class="sb-pip" style="background:var(--ca)"></div>자율활동<span class="sb-cnt" id="snc-a">0</span></div>
 <div class="sb-ni" onclick="switchTab('club')"><div class="sb-pip" style="background:var(--cl)"></div>동아리활동<span class="sb-cnt" id="snc-l">0</span></div>
 <div class="sb-ni" onclick="switchTab('career')"><div class="sb-pip" style="background:var(--cc)"></div>진로활동<span class="sb-cnt" id="snc-c">0</span></div>
 <div class="sb-ni" onclick="switchTab('behav')"><div class="sb-pip" style="background:var(--cb)"></div>행동특성·종합의견<span class="sb-cnt" id="snc-b">0</span></div>
-<span class="sb-lbl">분석 도구</span>
+<span class="sb-lbl" onclick="toggleNav(this)">분석 도구</span>
 <div class="sb-ni" onclick="switchTab('credit')"><div class="sb-pip" style="background:var(--ca)"></div>과목 이수현황<span class="sb-cnt" id="snc-cr">—</span></div>
 <div class="sb-ni" onclick="switchTab('keyword')"><div class="sb-pip" style="background:var(--cl)"></div>키워드 분석<span class="sb-cnt" id="snc-kw">—</span></div>
 <div class="sb-ni" onclick="switchTab('memos')"><div class="sb-pip" style="background:var(--cb)"></div>메모&amp;상담록<span class="sb-cnt" id="snc-mo">0</span></div>
-<span class="sb-lbl">v13 분석 도구</span>
+<span class="sb-lbl" onclick="toggleNav(this)">v13 분석 도구</span>
 <div class="sb-ni" onclick="switchTab('dashboard')"><div class="sb-pip" style="background:#e67e22"></div>📊 정량 대시보드<span class="sb-cnt" id="snc-db">—</span></div>
 <div class="sb-ni" onclick="switchTab('aiprompt')"><div class="sb-pip" style="background:#9b59b6"></div>🤖 AI 프롬프트<span class="sb-cnt" id="snc-ai">—</span></div>
 <div class="sb-ni" id="sb-ni-uni-main" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni2">—</span></div>
@@ -170,18 +181,6 @@
 <span class="step">② 분석 결과 확인</span>
 <span class="arrow">→</span>
 <span class="step">③ 상담 메모 작성</span>
-</div>
-<div class="shortcut-sites">
-<div class="shortcut-title">🔗 바로가기 사이트</div>
-<div class="shortcut-list">
-<a href="https://mathlhk15-glitch.github.io/lhk15/" target="_blank" class="shortcut-link">lhk15 사이트</a>
-<a href="https://www.adiga.kr" target="_blank" class="shortcut-link">아디가</a>
-<a href="https://www.academyinfo.go.kr" target="_blank" class="shortcut-link">학원정보</a>
-<a href="https://www.career.go.kr/" target="_blank" class="shortcut-link">진로교육</a>
-<a href="https://www.work24.go.kr/" target="_blank" class="shortcut-link">워크넷</a>
-<a href="https://www.ggoomgil.go.kr/" target="_blank" class="shortcut-link">꿈길</a>
-<a href="https://xn--vk1bt41a12ci0t.com/univ-admission-search/" target="_blank" class="shortcut-link">대학입학검색</a>
-</div>
 </div>
 <div class="up-zone" id="up-zone">
 <input accept=".pdf" id="fi" type="file"/>

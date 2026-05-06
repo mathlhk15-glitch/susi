@@ -158,6 +158,11 @@ body {
   padding: 4px 10px 6px;
   margin-top: 10px;
   display: block;
+  cursor: pointer;
+}
+
+.sb-nav.collapsed .sb-ni {
+  display: none !important;
 }
 
 .sb-ni {
@@ -275,48 +280,6 @@ body {
 .feat-c .fi { font-size: 22px; margin-bottom: 8px; display: block; }
 .feat-c .ft { font-size: 13px; font-weight: 700; color: var(--tx); margin-bottom: 3px; }
 .feat-c .fd { font-size: 11px; color: var(--tx3); line-height: 1.5; }
-
-.shortcut-sites {
-  margin-bottom: 28px;
-}
-
-.shortcut-title {
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--tx);
-  margin-bottom: 14px;
-  text-align: center;
-}
-
-.shortcut-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.shortcut-link {
-  display: inline-block;
-  padding: 10px 16px;
-  background: var(--sur);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  color: var(--tx2);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all .18s;
-  box-shadow: var(--shadow);
-}
-
-.shortcut-link:hover {
-  background: var(--gold-bg);
-  border-color: var(--gold-bdr);
-  color: var(--gold);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow2);
-}
 
 .up-zone {
   border: 2px dashed var(--bdr2);
