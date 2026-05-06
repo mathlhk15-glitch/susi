@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>모두의 생기부 분석기 Pro v13(뀨버전)</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <link rel="apple-touch-icon" href="public/icon.svg" />
   <link rel="stylesheet" href="src/styles/main.css" />
   <style>
     /* ── 햄버거 버튼 (모바일 전용) ── */
@@ -102,7 +105,7 @@
 <span class="sb-lbl">v13 분석 도구</span>
 <div class="sb-ni" onclick="switchTab('dashboard')"><div class="sb-pip" style="background:#e67e22"></div>📊 정량 대시보드<span class="sb-cnt" id="snc-db">—</span></div>
 <div class="sb-ni" onclick="switchTab('aiprompt')"><div class="sb-pip" style="background:#9b59b6"></div>🤖 AI 프롬프트<span class="sb-cnt" id="snc-ai">—</span></div>
-<div class="sb-ni" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni2">—</span></div>
+<div class="sb-ni" id="sb-ni-uni-main" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni2">—</span></div>
 <div class="sb-ni" onclick="switchTab('parentview')" style="border-left:2px solid #9b59b6;padding-left:6px"><div class="sb-pip" style="background:#9b59b6"></div>👨‍👩‍👧 학부모용 화면<span class="sb-cnt">—</span></div>
 </div>
 <div class="sb-ft">
@@ -118,6 +121,18 @@
 <div id="sb-saved-list"></div>
 </div>
 <div id="backup-banner" style="display:none;margin-top:8px;padding:6px 8px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:10px;color:#b8860b;line-height:1.5"></div>
+<!-- 공용 PC 세션 전용 모드 -->
+<div id="session-only-box" style="margin-top:8px;padding:7px 8px;background:#fff0f0;border:1px solid #ffb3b3;border-radius:6px;font-size:10px;color:#c0392b;line-height:1.6">
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:700">
+    <input type="checkbox" id="session-only-chk" onchange="toggleSessionOnlyMode(this.checked)"
+      style="width:14px;height:14px;cursor:pointer;accent-color:#c0392b">
+    🖥️ 공용 PC 모드 (세션 종료 시 자동 삭제)
+  </label>
+  <div id="session-only-desc" style="display:none;margin-top:4px;font-size:9px;color:#888;line-height:1.5">
+    브라우저 탭을 닫으면 저장된 상담 데이터가 자동으로 삭제됩니다.<br/>
+    개인 PC라면 이 옵션을 끄세요.
+  </div>
+</div>
 <div style="display:flex;gap:4px;margin-top:6px">
 <button onclick="exportStudentsJSON()" style="flex:1;background:var(--sur3);border:1px solid var(--bdr2);border-radius:var(--rs);padding:5px 4px;font-size:10px;color:var(--tx2);cursor:pointer;font-weight:700" title="JSON 백업">⬇ 백업</button>
 <button onclick="importStudentsJSON()" style="flex:1;background:var(--sur3);border:1px solid var(--bdr2);border-radius:var(--rs);padding:5px 4px;font-size:10px;color:var(--tx2);cursor:pointer;font-weight:700" title="JSON 가져오기">⬆ 가져오기</button>
@@ -155,6 +170,18 @@
 <span class="step">② 분석 결과 확인</span>
 <span class="arrow">→</span>
 <span class="step">③ 상담 메모 작성</span>
+</div>
+<div class="shortcut-sites">
+<div class="shortcut-title">🔗 바로가기 사이트</div>
+<div class="shortcut-list">
+<a href="https://mathlhk15-glitch.github.io/lhk15/" target="_blank" class="shortcut-link">lhk15 사이트</a>
+<a href="https://www.adiga.kr" target="_blank" class="shortcut-link">아디가</a>
+<a href="https://www.academyinfo.go.kr" target="_blank" class="shortcut-link">학원정보</a>
+<a href="https://www.career.go.kr/" target="_blank" class="shortcut-link">진로교육</a>
+<a href="https://www.work24.go.kr/" target="_blank" class="shortcut-link">워크넷</a>
+<a href="https://www.ggoomgil.go.kr/" target="_blank" class="shortcut-link">꿈길</a>
+<a href="https://xn--vk1bt41a12ci0t.com/univ-admission-search/" target="_blank" class="shortcut-link">대학입학검색</a>
+</div>
 </div>
 <div class="up-zone" id="up-zone">
 <input accept=".pdf" id="fi" type="file"/>
@@ -613,9 +640,9 @@
 
   <!-- 앱 모듈 로드 순서 (의존성 순) -->
   <script src="src/app/siteAuth.js"></script>
+  <script src="src/app/state.js"></script>
   <script src="src/app/adminAuth.js"></script>
   <script src="src/app/errorHandler.js"></script>
-  <script src="src/app/state.js"></script>
   <script src="src/storage/uniMaterialStore.js"></script>
 
   <script src="src/parser/lineGrouper.js"></script>
@@ -670,5 +697,16 @@
 </div>
 
   <script src="src/app/events.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('ServiceWorker registered:', reg.scope);
+        }).catch(err => {
+          console.log('ServiceWorker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
