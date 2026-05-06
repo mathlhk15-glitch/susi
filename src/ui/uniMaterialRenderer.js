@@ -36,17 +36,8 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── 토스트 메시지 ─────────────────────────────────────
-  function _toast(msg, color) {
-    const t = document.createElement('div');
-    t.style.cssText =
-      'position:fixed;bottom:24px;right:24px;background:' + (color||'#1aaa6e') +
-      ';color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;' +
-      'font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:320px;line-height:1.5';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3500);
-  }
+  // ── 토스트 메시지 (전역 showToast 위임) ──────────────────────
+  function _toast(msg, color) { window.showToast(msg, color); }
 
   // ── Gist 설정 UI ──────────────────────────────────────
   function _renderGistPanel(isAdmin) {

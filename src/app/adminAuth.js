@@ -10,24 +10,16 @@
   const HASH_KEY    = 'saenggibu_admin_hash_v1';
   const SESSION_TTL = 60 * 60 * 1000; // 1시간 세션
 
-  // ── 기본 비밀번호 해시 (SHA-256 of "123456")
+  // ── 기본 비밀번호 해시
   const DEFAULT_HASH = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
 
-  // ── 간단 해시 (SHA-256 없는 환경 대비 자체 구현)
+  // ── SHA-256 해시 함수 (crypto.subtle 사용 — 모든 현대 브라우저 지원)
   async function _hash(str) {
-    if (window.crypto && window.crypto.subtle) {
-      const buf = await window.crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(str)
-      );
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-    // fallback: 단순 해시
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-    }
-    return (h >>> 0).toString(16).padStart(8, '0').repeat(8);
+    const buf = await window.crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(str)
+    );
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
 
   function _getStoredHash() {
@@ -61,16 +53,8 @@
     _clearSession();
     _toast('관리자 로그아웃 되었습니다.', '#888');
     _updateAdminButtons();
-    // 로그아웃 시 업로드 화면으로 복귀 (생기부 미업로드 상태)
-    const upScr = document.getElementById('up-scr');
-    const resScr = document.getElementById('res-scr');
-    if (upScr) upScr.style.display = 'block';
-    if (resScr) resScr.style.display = 'none';
-    const sbNavAdmin = document.getElementById('sb-nav-admin');
-    if (sbNavAdmin) sbNavAdmin.style.display = 'none';
-    if (typeof window.renderUniMaterialTab === 'function') {
-      setTimeout(window.renderUniMaterialTab, 50);
-    }
+    // UI 갱신은 events.js 에서 admin:logout 이벤트로 처리 (관심사 분리)
+    window.dispatchEvent(new CustomEvent('admin:logout'));
   };
 
   window.showAdminLoginModal = function (onSuccess) {
@@ -118,7 +102,11 @@
         </div>
       </div>`;
     document.body.appendChild(modal);
-    setTimeout(() => document.getElementById('admin-pw-input')?.focus(), 100);
+    // 모달이 렌더링된 직후 비밀번호 입력창에 커서 포커스
+    requestAnimationFrame(() => {
+      const pwInput = document.getElementById('admin-pw-input');
+      if (pwInput) pwInput.focus();
+    });
 
     document.getElementById('admin-login-confirm').onclick = async function () {
       const pw = document.getElementById('admin-pw-input').value;
@@ -129,8 +117,13 @@
         _setSession();
         modal.remove();
         _toast('✅ 관리자로 로그인되었습니다.', '#1aaa6e');
+        // 기본 비밀번호 사용 중이면 변경 권고
+        if (_getStoredHash() === DEFAULT_HASH) {
+          setTimeout(() => _toast('⚠️ 기본 비밀번호 사용 중입니다. 보안을 위해 비밀번호를 변경하세요.', '#e67e22', 6000), 600);
+        }
         if (onSuccess) onSuccess();
         _updateAdminButtons();
+        window.dispatchEvent(new CustomEvent('admin:login'));
         // 대학자료 탭 리렌더 (업로드 UI 표시)
         if (typeof window.renderUniMaterialTab === 'function') {
           setTimeout(window.renderUniMaterialTab, 50);
@@ -194,18 +187,8 @@
     };
   };
 
-  // ── 토스트
-  function _toast(msg, color) {
-    color = color || '#1aaa6e';
-    const t = document.createElement('div');
-    t.style.cssText =
-      'position:fixed;bottom:24px;right:24px;background:' + color +
-      ';color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;' +
-      'font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:320px;line-height:1.5';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
+  // ── 토스트 (전역 showToast 위임)
+  function _toast(msg, color) { window.showToast(msg, color); }
 
   // ── 관리자 버튼 상태 갱신
   function _updateAdminButtons() {

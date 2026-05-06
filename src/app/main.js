@@ -48,11 +48,7 @@ async function processPdf(file) {
     const hadSaved = await loadConsultFromStorage(info.name);
     if (hadSaved && memos.length > 0) {
       setTimeout(() => {
-        const toast = document.createElement('div');
-        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1aaa6e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18)';
-        toast.textContent = `💾 ${info.name} 학생의 이전 상담 기록 ${memos.length}건을 불러왔습니다`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
+        window.showToast(`💾 ${info.name} 학생의 이전 상담 기록 ${memos.length}건을 불러왔습니다`);
       }, 1500);
     }
     // 사이드바 저장 목록 갱신

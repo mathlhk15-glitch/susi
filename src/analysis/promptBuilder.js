@@ -470,10 +470,48 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
 }
 
 // ── 상담 저장/복원 (IndexedDB) ──
-const IDB_NAME = 'saenggibu_db';
-const IDB_VER  = 1;
+const IDB_NAME  = 'saenggibu_db';
+const IDB_VER   = 1;
 const IDB_STORE = 'students';
 let _idb = null;
+
+// ── 공용 PC 세션 전용 모드 ──────────────────────────────────────
+// true: 탭 종료 시 저장된 모든 학생 데이터를 자동 삭제
+const SESSION_ONLY_KEY = 'saenggibu_session_only';
+let _sessionOnlyMode = false;
+
+// 세션 중에만 유효한 "이번 세션에서 저장한 학생 이름" 추적
+const _sessionNames = new Set();
+
+window.toggleSessionOnlyMode = function (enabled) {
+  _sessionOnlyMode = enabled;
+  sessionStorage.setItem(SESSION_ONLY_KEY, enabled ? '1' : '');
+  const desc = document.getElementById('session-only-desc');
+  if (desc) desc.style.display = enabled ? 'block' : 'none';
+  const box = document.getElementById('session-only-box');
+  if (box) box.style.background = enabled ? '#fff0f0' : '#f0fff4';
+  if (enabled) {
+    window.showToast('🖥️ 공용 PC 모드 ON — 탭 종료 시 데이터가 자동 삭제됩니다.', '#c0392b', 4000);
+  } else {
+    window.showToast('✅ 공용 PC 모드 OFF — 데이터가 유지됩니다.', '#1aaa6e', 3000);
+  }
+};
+
+// ── 세션 전용 모드일 때 이번 세션 데이터 전체 삭제 ──
+async function _clearSessionData() {
+  if (!_sessionOnlyMode || !_sessionNames.size) return;
+  try {
+    const db = await _openIDB();
+    for (const nm of _sessionNames) {
+      await new Promise((res, rej) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(nm);
+        tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+      });
+    }
+    _sessionNames.clear();
+  } catch (e) {}
+}
 
 function _openIDB() {
   if (_idb) return Promise.resolve(_idb);
@@ -548,6 +586,8 @@ async function saveConsultToStorage() {
       tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
     });
     _checkBackupBanner();
+    // 세션 전용 모드: 이번 세션에서 저장한 학생 추적
+    if (_sessionOnlyMode) _sessionNames.add(nm);
   } catch(e) {}
 }
 

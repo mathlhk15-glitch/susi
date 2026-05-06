@@ -1,0 +1,17 @@
+{
+  "name": "모두의 생기부 분석기 Pro",
+  "short_name": "생기부 분석기",
+  "description": "학교생활기록부 분석 지원 도구",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "./public/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

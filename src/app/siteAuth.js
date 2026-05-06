@@ -11,24 +11,17 @@
   const SITE_AUTH_SESSION_KEY = 'saenggibu_site_auth_v1';
   const SESSION_TTL           = 8 * 60 * 60 * 1000; // 8시간 세션
 
-  // 접속 비밀번호 해시 (SHA-256 of "ruddlf") — 고정값
+  // 접속 비밀번호 해시 — 고정값
   const SITE_PW_HASH = '7d33b47ed5c421f93569e5bb2a834460b9fa2ddf6c0b94ddc3c19a971c3e9da3';
 
-  // ── SHA-256 해시 함수 ────────────────────────────────────────
+  // ── SHA-256 해시 함수 (crypto.subtle 사용 — 모든 현대 브라우저 지원)
   async function _hash(str) {
-    if (window.crypto && window.crypto.subtle) {
-      const buf = await window.crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(str)
-      );
-      return Array.from(new Uint8Array(buf))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-    }
-    return (h >>> 0).toString(16).padStart(8, '0').repeat(8);
+    const buf = await window.crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(str)
+    );
+    return Array.from(new Uint8Array(buf))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   // ── 세션 유효성 ─────────────────────────────────────────────
@@ -121,7 +114,11 @@
     `;
 
     document.body.appendChild(overlay);
-    setTimeout(() => document.getElementById('site-pw-input')?.focus(), 120);
+    // 렌더링 직후 비밀번호 입력창에 커서 포커스 (깜빡임 즉시 시작)
+    requestAnimationFrame(() => {
+      const input = document.getElementById('site-pw-input');
+      if (input) input.focus();
+    });
 
     document.getElementById('site-pw-submit').onclick = async function () {
       const pw    = document.getElementById('site-pw-input').value;
