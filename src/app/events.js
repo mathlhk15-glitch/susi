@@ -62,15 +62,7 @@ window.addEventListener('admin:logout', function () {
 // ── 사이드바 메뉴 접고 펴기 ──
 function toggleNav(lbl) {
   const nav = lbl.parentElement;
-  const items = nav.querySelectorAll('.sb-ni');
-  const isCollapsed = nav.classList.contains('collapsed');
-  if (isCollapsed) {
-    nav.classList.remove('collapsed');
-    items.forEach(item => item.style.display = 'flex');
-  } else {
-    nav.classList.add('collapsed');
-    items.forEach(item => item.style.display = 'none');
-  }
+  nav.classList.toggle('collapsed');
 }
 
 // ── admin:login UI 처리 ──
