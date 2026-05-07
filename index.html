@@ -7,13 +7,101 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a1a1a" />
   <link rel="apple-touch-icon" href="public/icon.svg" />
+  <link rel="stylesheet" href="https://mathlhk15-glitch.github.io/lhk15/common.css" />
   <link rel="stylesheet" href="src/styles/main.css" />
   <style>
+    :root {
+      --susi-workstation-nav-height: 48px;
+    }
+    body[data-ws-page="susi"] {
+      min-height: 100vh;
+    }
+    .ws-susi-nav {
+      height: var(--susi-workstation-nav-height);
+      background: #1e3a5f;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      position: sticky;
+      top: 0;
+      z-index: 9200;
+    }
+    .ws-susi-nav__home,
+    .ws-susi-nav__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.86);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .ws-susi-nav__home {
+      background: #f0a500;
+      color: #1a1a1a;
+    }
+    .ws-susi-nav__home:hover,
+    .ws-susi-nav__link:hover {
+      text-decoration: none;
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+    }
+    .ws-susi-nav__home:hover {
+      background: #d4920a;
+      color: #1a1a1a;
+    }
+    .ws-susi-nav__title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      margin-right: auto;
+    }
+    .ws-susi-nav__title span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    body[data-ws-page="susi"] .app {
+      min-height: calc(100vh - var(--susi-workstation-nav-height));
+    }
+    body[data-ws-page="susi"] .sb {
+      top: var(--susi-workstation-nav-height);
+      height: calc(100vh - var(--susi-workstation-nav-height));
+    }
+    .ws-student-context {
+      display: none;
+      margin: 0 auto 18px;
+      max-width: 760px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-left: 4px solid #6c63ff;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #312e81;
+      font-size: 13px;
+      line-height: 1.6;
+      box-shadow: 0 2px 10px rgba(49,46,129,.08);
+    }
+    .ws-student-context strong {
+      font-weight: 900;
+    }
     /* ── 햄버거 버튼 (모바일 전용) ── */
     #mob-menu-btn {
       display: none;
       position: fixed;
-      top: 12px;
+      top: calc(var(--susi-workstation-nav-height) + 12px);
       left: 12px;
       z-index: 9999999;
       background: var(--gold);
@@ -41,8 +129,8 @@
       .sb {
         position: fixed !important;
         left: -280px;
-        top: 0;
-        height: 100vh;
+        top: var(--susi-workstation-nav-height);
+        height: calc(100vh - var(--susi-workstation-nav-height));
         z-index: 9080;
         transition: left .25s ease;
         box-shadow: none;
@@ -61,9 +149,36 @@
       /* PC: res-scr 상단 여백 조정 */
       #res-scr { padding-top: 20px; }
     }
+    @media (max-width: 640px) {
+      .ws-susi-nav {
+        padding: 0 10px;
+        gap: 6px;
+      }
+      .ws-susi-nav__title {
+        font-size: 12px;
+      }
+      .ws-susi-nav__home,
+      .ws-susi-nav__link {
+        padding: 0 9px;
+        font-size: 12px;
+      }
+      .ws-susi-nav__link--optional {
+        display: none;
+      }
+    }
   </style>
 </head>
-<body>
+<body data-ws-page="susi">
+<nav class="ws-susi-nav" aria-label="워크스테이션 간소화 메뉴">
+  <a class="ws-susi-nav__home" href="https://mathlhk15-glitch.github.io/lhk15/">← 워크스테이션 홈</a>
+  <div class="ws-susi-nav__title">
+    <span>📋</span>
+    <span>생기부 분석기 Pro</span>
+  </div>
+  <a class="ws-susi-nav__link ws-susi-nav__link--optional" href="https://mathlhk15-glitch.github.io/2026gumsa-R/" target="_blank" rel="noopener">📊 검사결과</a>
+  <a class="ws-susi-nav__link" href="https://mathlhk15-glitch.github.io/lhk15/진로상담시스템.html">💬 상담관리</a>
+  <a class="ws-susi-nav__link" href="https://mathlhk15-glitch.github.io/lhk15/report.html">🧾 통합리포트</a>
+</nav>
 <div class="app">
 <!-- ── 모바일 햄버거 버튼 ── -->
 <button id="mob-menu-btn" onclick="toggleSidebar()" aria-label="메뉴 열기">☰</button>
@@ -94,7 +209,7 @@
 <div class="sb-ni" onclick="window.open('https://www.career.go.kr/', '_blank')"><div class="sb-pip" style="background:#2980b9"></div>커리어넷</div>
 <div class="sb-ni" onclick="window.open('https://www.work24.go.kr/', '_blank')"><div class="sb-pip" style="background:#8e44ad"></div>워크넷</div>
 <div class="sb-ni" onclick="window.open('https://www.ggoomgil.go.kr/', '_blank')"><div class="sb-pip" style="background:#f39c12"></div>꿈길</div>
-<div class="sb-ni" onclick="window.open('https://xn--vk1bt41a12ci0t.com/univ-admission-search/', '_blank')"><div class="sb-pip" style="background:#e74c3c"></div>입시자료오음</div>
+<div class="sb-ni" onclick="window.open('https://xn--vk1bt41a12ci0t.com/univ-admission-search/', '_blank')"><div class="sb-pip" style="background:#e74c3c"></div>입시자료모음</div>
 </div>
 <!-- ② 관리자 로그인 시 보이는 메뉴: 대학자료 분석 (PDF 불필요) -->
 <div class="sb-nav" id="sb-nav-admin" style="display:none">
@@ -160,6 +275,7 @@
 <h1 class="up-h1">모두의<br/><b>생기부 분석기</b><br/><em>Pro v13(뀨버전)</em></h1>
 <p class="up-sub">교과군 통합 · 창체 완전분석 · PDF 고화질 뷰어<br/>v6 분석엔진 · 탐구깊이 점수 · AI 프롬프트 · 정량 대시보드</p>
 </div>
+<div class="ws-student-context" id="ws-student-context"></div>
 <div class="local-secure-box">
 <div class="local-secure-title">🔐 개인정보 보호 안내</div>
 <div class="local-secure-grid">
@@ -696,6 +812,42 @@
 </div>
 
   <script src="src/app/events.js"></script>
+  <script>
+    (function initIncomingStudentContext() {
+      const params = new URLSearchParams(window.location.search);
+      const studentId = (params.get('studentId') || '').trim();
+      const name = (params.get('name') || '').trim();
+      if (!studentId && !name) return;
+
+      window.WS_INCOMING_STUDENT = { studentId, name };
+
+      const label = name || (studentId ? `학번 ${studentId}` : '');
+      if (label) document.title = `${label} 생기부 분석 - 모두의 생기부 분석기 Pro`;
+
+      const box = document.getElementById('ws-student-context');
+      if (box) {
+        box.style.display = 'block';
+        box.innerHTML = `<strong>${label}</strong> 정보가 워크스테이션에서 전달되었습니다.<br>생기부 PDF를 업로드하면 이 학생의 분석 리포트로 이어집니다.`;
+      }
+
+      const nm = document.getElementById('sb-nm');
+      const sc = document.getElementById('sb-sc');
+      const stu = document.getElementById('sb-stu');
+      if (nm && label) {
+        nm.dataset.raw = label;
+        nm.textContent = label;
+      }
+      if (sc) {
+        sc.dataset.raw = studentId ? `학번 ${studentId}` : '워크스테이션 연결';
+        sc.textContent = studentId ? `학번 ${studentId}` : '워크스테이션 연결';
+      }
+      if (stu) stu.style.display = 'block';
+
+      if (typeof window.showToast === 'function') {
+        setTimeout(() => window.showToast(`${label} 학생 정보가 연결되었습니다.`, '#6c63ff'), 300);
+      }
+    })();
+  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
