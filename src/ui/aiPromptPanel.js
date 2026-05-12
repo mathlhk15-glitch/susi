@@ -49,7 +49,8 @@ function renderAIPrompt(parsedData, info, analysis) {
 
   // 업로드된 대학자료에서 대학 목록 추출
   const savedMats = (typeof getSavedUniMaterials === 'function') ? getSavedUniMaterials() : [];
-  const uniNames = [...new Set(savedMats.filter(m => m.universityName).map(m => m.universityName))];
+  const uniNames = [...new Set(savedMats.filter(m => m.universityName).map(m => m.universityName))]
+    .sort((a, b) => a.localeCompare(b, 'ko'));
   for (const u of uniNames) {
     html += `<option value="${u.replace(/"/g,'&quot;')}">${u.replace(/</g,'&lt;')}</option>`;
   }
