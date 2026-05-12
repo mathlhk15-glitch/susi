@@ -59,6 +59,74 @@ window.addEventListener('admin:logout', function () {
   }
 });
 
+// ── 새 학생 분석 초기화 ──
+window.resetApp = function () {
+  if (!confirm('현재 분석 결과를 지우고 새 학생을 분석하시겠습니까?')) return;
+
+  // 전역 상태 초기화
+  pdfDoc = null; pdfScale = 1.0; pdfFitScale = 1.0;
+  currentPage = 1; totalPages = 0;
+  currentAct = null; currentHLs = []; selTxt = '';
+  memos = []; finalMemoSaved = null;
+  parsedData = null; allLines = []; takenSubjects = {};
+  v6Analysis = null; gradeScoreData = null;
+  currentUniMaterial = null; currentUniMaterialComparison = null;
+  uniMaterialAnalysisLines = [];
+
+  // 동적 불용어 초기화
+  if (typeof clearDynamicStop === 'function') clearDynamicStop();
+
+  // 화면 전환: 결과 → 업로드
+  const upScr = document.getElementById('up-scr');
+  const resScr = document.getElementById('res-scr');
+  if (resScr) resScr.style.display = 'none';
+  if (upScr) upScr.style.display = 'block';
+
+  // 파일 입력 초기화
+  const fi = document.getElementById('fi');
+  if (fi) fi.value = '';
+
+  // 학생 정보 초기화
+  const nm = document.getElementById('sb-nm');
+  const sc = document.getElementById('sb-sc');
+  const stuBar = document.getElementById('sb-stu');
+  if (nm) { nm.textContent = '—'; nm.dataset.raw = ''; }
+  if (sc) { sc.textContent = '—'; sc.dataset.raw = ''; }
+
+  // PDF 업로드 후 사이드바 메뉴 숨김
+  const sbNav = document.getElementById('sb-nav');
+  if (sbNav) sbNav.style.display = 'none';
+
+  // 빠른 접근 바 숨김
+  const qbar = document.getElementById('quick-access-bar');
+  if (qbar) qbar.style.display = 'none';
+
+  // 인쇄 버튼 숨김
+  const pb = document.getElementById('tab-print-btn');
+  if (pb) pb.style.display = 'none';
+  const frb = document.getElementById('full-report-btn');
+  if (frb) frb.style.display = 'none';
+  const pmw = document.getElementById('print-mask-wrap');
+  if (pmw) pmw.style.display = 'none';
+  const pmsw = document.getElementById('print-mask-school-wrap');
+  if (pmsw) pmsw.style.display = 'none';
+
+  // 에러/진행바 숨김
+  const err = document.getElementById('err');
+  if (err) { err.style.display = 'none'; err.innerHTML = ''; }
+  const prog = document.getElementById('prog');
+  if (prog) prog.style.display = 'none';
+
+  // 스캔 배너 제거
+  const banner = document.getElementById('scanned-banner');
+  if (banner) banner.remove();
+
+  // 모바일 사이드바 닫기
+  if (window.innerWidth <= 960) window.closeSidebar();
+
+  window.showToast('✅ 초기화 완료 — 새 학생 파일을 업로드하세요', '#1aaa6e');
+};
+
 // ── 사이드바 메뉴 접고 펴기 ──
 function toggleNav(lbl) {
   const nav = lbl.parentElement;
