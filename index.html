@@ -197,8 +197,8 @@
 <!-- ① 항상 보이는 메뉴: 입시탐색기 (PDF·관리자 불필요) -->
 <div class="sb-nav" id="sb-nav-always" style="display:block">
 <span class="sb-lbl" onclick="toggleNav(this)">입시 탐색기</span>
-<div class="sb-ni" onclick="switchTab('admission5')"><div class="sb-pip" style="background:#58a6ff"></div>🎓 1·2학년 5등급 기준<span class="sb-cnt">2022</span></div>
-<div class="sb-ni" onclick="switchTab('admission9')"><div class="sb-pip" style="background:#ffa657"></div>🎓 3학년 9등급 기준<span class="sb-cnt">2015</span></div>
+<div class="sb-ni" onclick="window.open('https://mathlhk15-glitch.github.io/2028ipsi/','_blank')"><div class="sb-pip" style="background:#58a6ff"></div>🎓 1·2학년 5등급 기준<span class="sb-cnt">2022</span></div>
+<div class="sb-ni" onclick="window.open('https://mathlhk15-glitch.github.io/ipsi/','_blank')"><div class="sb-pip" style="background:#ffa657"></div>🎓 3학년 9등급 기준<span class="sb-cnt">2015</span></div>
 </div>
 <!-- 바로가기 사이트 -->
 <div class="sb-nav" id="sb-nav-shortcuts" style="display:block">
@@ -324,8 +324,8 @@
 <button class="tab-btn" onclick="switchTab('aiprompt')">🤖 AI분석</button>
 <button class="tab-btn" onclick="switchTab('unimaterial')">🏫 대학자료</button>
 <button class="tab-btn" onclick="switchTab('parentview')" style="background:var(--sur2);border-color:var(--cs)">👨‍👩‍👧 학부모용</button>
-<button class="tab-btn" onclick="switchTab('admission5')">🎓 1·2학년 입시</button>
-<button class="tab-btn" onclick="switchTab('admission9')">🎓 3학년 입시</button>
+<button class="tab-btn" onclick="window.open('https://mathlhk15-glitch.github.io/2028ipsi/','_blank')">🎓 1·2학년 입시</button>
+<button class="tab-btn" onclick="window.open('https://mathlhk15-glitch.github.io/ipsi/','_blank')">🎓 3학년 입시</button>
 <button id="tab-print-btn" onclick="printCurrentTab()" style="margin-left:auto;display:none;align-items:center;gap:5px;padding:6px 14px;background:var(--gold-bg);border:1px solid var(--gold-bdr);border-radius:var(--rs);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" title="현재 탭 인쇄/PDF저장">🖨️ 인쇄·PDF</button>
 <select id="print-preset-sel" onchange="applyPrintPresetPreview(this.value)" style="display:none;margin-left:4px;padding:5px 8px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:11px;background:var(--sur);color:var(--tx2);cursor:pointer" title="인쇄 프리셋">
 <option value="detail">교사용 상세</option>
