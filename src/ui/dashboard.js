@@ -31,7 +31,7 @@ function renderDashboard(analysis, info) {
   html += `<div class="dash-card"><div class="dash-card-label">탐구깊이 평균</div><div class="dash-card-value">${db.avgDepth}<span style="font-size:14px;font-weight:400">/10</span></div></div>`;
   html += `<div class="dash-card"><div class="dash-card-label">데이터 신뢰도</div><div class="dash-card-value" style="font-size:18px">${e(db.trustGrade)}</div></div>`;
   html += `<div class="dash-card"><div class="dash-card-label">객관적 기록 비율</div><div class="dash-card-value">${db.factRatio}<span style="font-size:14px;font-weight:400">%</span></div></div>`;
-  html += `<div class="dash-card"><div class="dash-card-label">📚 독서 활동</div><div class="dash-card-value">${db.readingCount ?? 0}<span style="font-size:14px;font-weight:400">건</span></div></div>`;
+  html += `<div class="dash-card"><div class="dash-card-label">📚 독서 언급</div><div class="dash-card-value">${db.readingCount ?? 0}<span style="font-size:14px;font-weight:400">건</span></div></div>`;
   html += `</div>`;
   // ── 지표 해석 안내 (오해 방지) ──
   html += `<div style="margin:-8px 0 20px;padding:8px 12px;background:var(--sur2);border-left:3px solid var(--gold);border-radius:var(--rs);font-size:11px;color:var(--tx3);line-height:1.7">
