@@ -323,7 +323,11 @@ function v6RunAnalysis(parsedData, hopeText) {
   const studentType = v6EstimateStudentType(allRecords, hopeText);
   const growth = v6AnalyzeGrowth(allRecords);
   const trend = v6JudgeGrowthTrend(growth);
-  const readingCount = (parsedData.reading || []).length;
+  // 케적·창체 레ϐ드 중 독서 언급 포함 레ϐ드 카운트
+  const READ_PAT = /읽|책|독서|저자|논문|도서|저서|집필|출판물|각주|서적/;
+  const readingCount = allRecords.filter(r =>
+    r.area !== 'behav' && READ_PAT.test(r.full || r.summary || '')
+  ).length;
   const dashboard = v6ComputeDashboard(allRecords, readingCount);
   const univFrames = v6BuildUnivFrameAnalysis(allRecords, strengths, risks, hopeText, growth);
   // 각 레코드에 depth score 첨부
