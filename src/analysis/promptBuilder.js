@@ -129,7 +129,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
     ln(`  학년미상 비율  : ${db.unknownRatio}%`);
     ln(`  객관적 기록 비율: ${db.factRatio}%`);
     ln(`  데이터 신뢰도  : ${db.trustGrade}`);
-    ln(`  독서 활동 건수 : ${db.readingCount ?? 0}건`);
+    ln(`  독서 언급 레코드: ${db.readingCount ?? 0}건 (세특·창체 내 독서 저서·논문 언급 포함 항목 수)`);
     ln();
     if (db.gradeCount) { ln("  학년별 활동 수:"); for (const [g, c] of Object.entries(db.gradeCount).sort()) ln(`    ${g}: ${c}건`); }
     if (db.areaCount) { ln("  영역별 활동 수:"); for (const [a, c] of Object.entries(db.areaCount).sort()) ln(`    ${a}: ${c}건`); }
