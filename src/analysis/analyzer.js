@@ -281,7 +281,7 @@ function v6BuildUnivFrameAnalysis(records, strengths, risks, hopeText, growth) {
   return result;
 }
 
-function v6ComputeDashboard(records) {
+function v6ComputeDashboard(records, readingCount = 0) {
   const total = records.length;
   if (total === 0) return {};
   const gradeCount = {}, areaCount = {};
@@ -292,6 +292,8 @@ function v6ComputeDashboard(records) {
     const aKr = areaMap[r.area] || r.area || '기타';
     areaCount[aKr] = (areaCount[aKr] || 0) + 1;
   }
+  // 독서활동 영역 추가
+  if (readingCount > 0) areaCount["독서활동"] = readingCount;
   const scores = records.map(r => v6ScoreInquiryDepth(r.full || r.summary || '').score);
   const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10;
   const unknownCount = gradeCount['학년미상'] || 0;
@@ -305,7 +307,7 @@ function v6ComputeDashboard(records) {
   let trustGrade = "C (낮음 — 원본 확인 권장)";
   if (unknownRatio < 20 && factRatio > 60) trustGrade = "A (높음)";
   else if (unknownRatio < 40 && factRatio > 40) trustGrade = "B (보통)";
-  return { totalRecords: total, gradeCount, areaCount, avgDepth: avgScore, unknownRatio, factRatio, trustGrade };
+  return { totalRecords: total, gradeCount, areaCount, avgDepth: avgScore, unknownRatio, factRatio, trustGrade, readingCount };
 }
 
 function v6RunAnalysis(parsedData, hopeText) {
@@ -321,7 +323,8 @@ function v6RunAnalysis(parsedData, hopeText) {
   const studentType = v6EstimateStudentType(allRecords, hopeText);
   const growth = v6AnalyzeGrowth(allRecords);
   const trend = v6JudgeGrowthTrend(growth);
-  const dashboard = v6ComputeDashboard(allRecords);
+  const readingCount = (parsedData.reading || []).length;
+  const dashboard = v6ComputeDashboard(allRecords, readingCount);
   const univFrames = v6BuildUnivFrameAnalysis(allRecords, strengths, risks, hopeText, growth);
   // 각 레코드에 depth score 첨부
   for (const rec of allRecords) {

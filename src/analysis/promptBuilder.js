@@ -129,6 +129,7 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
     ln(`  학년미상 비율  : ${db.unknownRatio}%`);
     ln(`  객관적 기록 비율: ${db.factRatio}%`);
     ln(`  데이터 신뢰도  : ${db.trustGrade}`);
+    ln(`  독서 활동 건수 : ${db.readingCount ?? 0}건`);
     ln();
     if (db.gradeCount) { ln("  학년별 활동 수:"); for (const [g, c] of Object.entries(db.gradeCount).sort()) ln(`    ${g}: ${c}건`); }
     if (db.areaCount) { ln("  영역별 활동 수:"); for (const [a, c] of Object.entries(db.areaCount).sort()) ln(`    ${a}: ${c}건`); }
@@ -310,14 +311,6 @@ function v6BuildPromptForClaude(parsedData, info, analysis, hopeText, uniOptions
   ln();
   ln("  · 텍스트 모드: 상단 분할 출력 규칙에 따라 활동 1~2 / 3~5로 나눠 출력");
   ln("  · HTML 모드: 단일 파일에 5개 활동 전부 포함 (10단계 간결 서술)");
-  ln();
-
-  ln("  ⚠️ 【 수준 조건 — 반드시 준수 】");
-  ln("  · 모든 탐구활동은 일반적인 고등학교 3학년 수준에서 직접 수행 가능해야 합니다.");
-  ln("  · 대학원·연구소 장비, 전문 실험 도구, 외부 기관 협력이 필요한 주제는 금지.");
-  ln("  · 교내 교과 수업, 도서관 자료, 인터넷 검색, 간단한 설문/인터뷰로 실행 가능한 수준으로 설계.");
-  ln("  · 수학·통계 분석이 포함된 경우 고교 교육과정 내 수준(중학~수학Ⅱ/확률과 통계)으로 한정.");
-  ln("  · 각 활동의 결과물은 학생 혼자 또는 소그룹이 실제 완성할 수 있는 형태(보고서/발표자료/포스터)로 제한.");
   ln();
 
   // ── 활동별 독립 스캐폴딩 (5회 반복이 아닌 5개 독립 블록) ──
