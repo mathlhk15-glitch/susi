@@ -1953,11 +1953,9 @@ function analyzeInputQuality(text) {
   const sections = ['창의적 체험활동','교과학습발달상황','세부능력','봉사활동','행동특성','독서활동','출결'];
   const detected = {};
   for (const sec of sections) {
-    detected[sec] = raw.split(/
-/).some(line => (getSectionFromLine ? getSectionFromLine(line) === sec : false)) || raw.includes(sec);
+    detected[sec] = raw.split('\n').some(line => (getSectionFromLine ? getSectionFromLine(line) === sec : false)) || raw.includes(sec);
   }
-  const lineCount = raw.split(/
-/).length;
+  const lineCount = raw.split('\n').length;
   const gradeStats = parseGradeScore(raw);
   const attendance = parseAttendance(raw);
   const volunteer = parseVolunteerHours(raw);
