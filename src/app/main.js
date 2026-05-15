@@ -75,7 +75,7 @@ async function processPdf(file) {
     // v13: Run v6 analysis engine
     setP(92, 'v6 분석 엔진 실행 중...');
     v6Analysis = v6RunAnalysis(parsedData, '');
-    const infoObj = { name: info.name, school: info.school };
+    infoObj = { name: info.name, school: info.school };
 
     // v13: Render dashboard
     setP(95, '대시보드 렌더링 중...');

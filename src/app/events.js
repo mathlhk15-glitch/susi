@@ -69,7 +69,7 @@ window.resetApp = function () {
   currentAct = null; currentHLs = []; selTxt = '';
   memos = []; finalMemoSaved = null;
   parsedData = null; allLines = []; takenSubjects = {};
-  v6Analysis = null; gradeScoreData = null;
+  v6Analysis = null; gradeScoreData = null; infoObj = null;
   currentUniMaterial = null; currentUniMaterialComparison = null;
   uniMaterialAnalysisLines = [];
 
