@@ -909,7 +909,7 @@
 function sendToEvalAnalyzer() {
   try {
     var payload = {
-      rawText: allLines && allLines.length > 0 ? allLines.join('\n') : '',
+      rawText: allLines && allLines.length > 0 ? allLines.map(function(l){ return l.text || ''; }).join('\n') : '',
       grade: (infoObj && infoObj.grade) ? infoObj.grade : '',
       major: (infoObj && infoObj.major) ? infoObj.major : '',
       createdAt: new Date().toISOString()
