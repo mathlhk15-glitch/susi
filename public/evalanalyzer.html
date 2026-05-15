@@ -2271,22 +2271,28 @@ function scoreSentenceForItemTrace(sentence, item) {
   let score = 0;
   const trace = { score: 0, core: [], support: [], negative: [], patterns: [], negation: false };
   const kws = item.keywords;
+
+  // ── 키워드 단독 매칭은 보조 신호로만 사용 (점수 낮게)
+  // 실질적인 점수는 PATTERNS(문맥 조합)에서만 의미 있게 나옴
   if (kws && typeof kws === 'object' && !Array.isArray(kws)) {
     for (const kw of (kws.core || [])) {
-      if (sentence.includes(kw)) { score += 2; trace.core.push(kw); }
+      if (sentence.includes(kw)) { score += 0.5; trace.core.push(kw); }
     }
     for (const kw of (kws.support || [])) {
-      if (sentence.includes(kw)) { score += 1; trace.support.push(kw); }
+      if (sentence.includes(kw)) { score += 0.2; trace.support.push(kw); }
     }
     for (const kw of (kws.negative || [])) {
-      if (sentence.includes(kw)) { score -= 2; trace.negative.push(kw); }
+      if (sentence.includes(kw)) { score -= 1.5; trace.negative.push(kw); }
     }
   } else if (Array.isArray(kws)) {
-    for (const kw of kws) { if (sentence.includes(kw)) { score += 1; trace.support.push(kw); } }
+    for (const kw of kws) { if (sentence.includes(kw)) { score += 0.2; trace.support.push(kw); } }
   }
+
+  // ── PATTERN 매칭: 문맥 조합이 확인된 경우에만 실질 점수 부여
   for (const p of (PATTERNS[item.name] || [])) {
     if (p.regex.test(sentence)) { score += p.score; trace.patterns.push(String(p.regex).slice(0,60)); }
   }
+
   if (hasNegationContext(sentence, item.name)) {
     trace.negation = true;
     score = Math.min(score, 0);
@@ -2560,7 +2566,9 @@ function runAnalysis() {
           }
         }
 
-        if (blockScore > 0) {
+        // 키워드 단독 매칭(score < 2)만으로는 근거로 등록하지 않음
+        // PATTERN(문맥 조합) 또는 core 키워드 복수 매칭이 있어야 등록
+        if (blockScore >= 2) {
           const sw = getSectionWeightBySection(block.section, item.sectionWeights || {});
           const score = blockScore * sw;
           found.push({
@@ -2822,10 +2830,11 @@ function renderRubricGrid() {
 function toggleEvidence(itemName, idx, checked, el) {
   analysisResult[itemName][idx].checked = checked;
   el.classList.toggle('excluded', !checked);
-  const cnt = analysisResult[itemName].filter(e => e.checked).length;
-  const sc  = analysisResult[itemName].filter(e => e.checked).reduce((s, e) => s + (e.score || 0), 0);
+  const checkedEvs = analysisResult[itemName].filter(e => e.checked);
+  const cnt = checkedEvs.length;
+  const sc  = checkedEvs.reduce((s, e) => s + (e.score || 0), 0);
   // 파싱 기반 강도가 있으면 우선 적용
-  const str = resolveStrength(itemName, cnt, sc);
+  const str = resolveStrength(itemName, cnt, sc, checkedEvs);
   const badge = el.closest('.rubric-item').querySelector('.strength-badge');
   badge.className = `strength-badge strength-${str.cls}`;
   badge.textContent = str.label;
@@ -2981,11 +2990,11 @@ function checkAllEvidence(checked) {
 // ── resolveStrength: 항목명을 받아 파싱 기반 강도 우선 반환 ──────────
 // 학업성취도처럼 parseGradeScore()가 _parsedStrength를 심어둔 경우
 // getStrengthLabel(cnt, sc) 대신 이 함수를 사용해야 정확한 강도가 표시됨.
-function resolveStrength(itemName, cnt, sc) {
-  const evs = analysisResult[itemName] || [];
-  const parsedEv = evs.find(e => e._parsedStrength && e.checked);
+function resolveStrength(itemName, cnt, sc, evs) {
+  const allEvs = evs || (analysisResult[itemName] || []).filter(e => e.checked);
+  const parsedEv = allEvs.find(e => e._parsedStrength && e.checked !== false);
   if (parsedEv) return { label: parsedEv._parsedStrength, cls: parsedEv._parsedCls };
-  return getStrengthLabel(cnt, sc);
+  return getStrengthLabel(cnt, sc, allEvs);
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -3003,7 +3012,7 @@ function getItemStrengthInfo(itemName) {
   const evs = (analysisResult[itemName] || []).filter(e => e.checked);
   const cnt = evs.length;
   const sc = evs.reduce((s, e) => s + (e.score || 0), 0);
-  const resolved = resolveStrength(itemName, cnt, sc);
+  const resolved = resolveStrength(itemName, cnt, sc, evs);
   return { itemName, count: cnt, score: sc, label: resolved.label, cls: resolved.cls, evidences: evs };
 }
 
@@ -3181,21 +3190,40 @@ function buildUniversityComment(uniId, uni, strongItems, weakItems, fit) {
   return lines.join('<br>');
 }
 
-function getStrengthLabel(count, scoreSum) {
+// ── 질 보정 count 계산: A=1.0, B=0.6, C=0.2로 가중 합산
+// 단순 개수 대신 이 값을 강도 판정에 사용
+function calcQualityWeightedCount(evs) {
+  if (!evs || !evs.length) return 0;
+  return evs.reduce((sum, ev) => {
+    const g = ev.qualityGrade || 'C';
+    const w = g === 'A' ? 1.0 : g === 'B' ? 0.6 : 0.2;
+    return sum + w;
+  }, 0);
+}
+
+function getStrengthLabel(count, scoreSum, evs) {
+  // evs가 전달된 경우 질 보정 count 사용, 아니면 raw count로 폴백
+  const qCount = evs ? calcQualityWeightedCount(evs) : count;
+
   if (scoreSum === undefined) {
-    if (count >= 5) return { label: '매우 강함', cls: 'high' };
-    if (count >= 3) return { label: '강함',     cls: 'high' };
-    if (count >= 1) return { label: '보통',     cls: 'mid'  };
+    // 질 보정: A급 근거 3개(=qCount 3.0) 이상이어야 '매우 강함'
+    if (qCount >= 3.0) return { label: '매우 강함', cls: 'high' };
+    if (qCount >= 1.8) return { label: '강함',     cls: 'high' };
+    if (qCount >= 0.8) return { label: '보통',     cls: 'mid'  };
+    if (qCount >  0  ) return { label: '약함',     cls: 'low'  };
     return { label: '근거 부족', cls: 'none' };
   }
   if (count === 0) return { label: '근거 부족', cls: 'none' };
-  if (scoreSum >= 15 || count >= 5) return { label: '매우 강함', cls: 'high' };
-  if (scoreSum >= 8  || count >= 3) return { label: '강함',     cls: 'high' };
-  if (scoreSum >= 4  || count >= 2) return { label: '보통',     cls: 'mid'  };
-  return { label: '약함', cls: 'low' };
+  // PATTERN 기반 점수(scoreSum)와 질 보정 count 복합 판정
+  // 둘 다 높아야 '매우 강함' — OR 조건 제거
+  if (qCount >= 3.0 && scoreSum >= 12) return { label: '매우 강함', cls: 'high' };
+  if (qCount >= 1.8 && scoreSum >= 6 ) return { label: '강함',     cls: 'high' };
+  if (qCount >= 0.8 || scoreSum >= 4 ) return { label: '보통',     cls: 'mid'  };
+  if (qCount >  0  ) return { label: '약함',     cls: 'low'  };
+  return { label: '근거 부족', cls: 'none' };
 }
-function getStrengthClass(count, scoreSum) {
-  return getStrengthLabel(count, scoreSum).cls;
+function getStrengthClass(count, scoreSum, evs) {
+  return getStrengthLabel(count, scoreSum, evs).cls;
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
