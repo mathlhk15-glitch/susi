@@ -2498,6 +2498,19 @@ function parseGradeScore(text) {
   const p2 = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·]+)\s+(\d{2,3})점\s+[A-Ea-e]\s+([1-9])\s*등급/g;
   for (const m of raw.matchAll(p2)) addEntry(m[1], m[2], m[3], m.index, m.index + m[0].length, '점수+등급');
 
+  // 2-1순위: PDF 복사 시 줄바꿈/공백 혼합 형식 (점·등급 글자 없음)
+  // 예: "국어 3 98 A 1" 또는 "국어\n3\n98\nA\n1"
+  if (entries.length < 2) {
+    const p2b = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·]{1,15})[ \t\n]+(?:\d+[ \t\n]+)?(\d{2,3})[ \t\n]+[A-Ea-e][ \t\n]+([1-9])(?!\d)/g;
+    for (const m of raw.matchAll(p2b)) addEntry(m[1], m[2], m[3], m.index, m.index + m[0].length, '줄바꿈형식');
+  }
+
+  // 2-2순위: "점" 없이 공백만으로 구분된 형식. 예: 수학 4 85 B 2
+  if (entries.length < 2) {
+    const p2c = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·]{1,15})\s+\d+\s+(\d{2,3})\s+[A-Ea-e]\s+([1-9])(?!\d)/g;
+    for (const m of raw.matchAll(p2c)) addEntry(m[1], m[2], m[3], m.index, m.index + m[0].length, '공백형식');
+  }
+
   // 3순위: 등급만 있는 형식. 단, 점수+등급이 2개 이상 잡히면 중복·과잉 파싱 방지를 위해 사용하지 않음.
   if (entries.length < 2) {
     const p3 = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·]{1,18})\s*[:：]?\s+([1-9])\s*등급/g;
