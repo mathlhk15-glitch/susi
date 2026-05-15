@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
 //  Tab Switch
 // ════════════════════════════════════════
-const TAB_IDX = {subject:0,auto:1,club:2,career:3,behav:4,credit:5,keyword:6,memos:7,dashboard:8,aiprompt:9,unimaterial:10,parentview:11,admission5:12,admission9:13};
+const TAB_IDX = {subject:0,auto:1,club:2,career:3,behav:4,credit:5,keyword:6,memos:7,dashboard:8,aiprompt:9,unimaterial:10,evalanalyzer:11,parentview:12,admission5:13,admission9:14};
 const TAB_PRINT_LABELS = {
   subject: '교과 탐구활동 분석',
   auto: '자율활동 분석',
@@ -17,6 +17,7 @@ const TAB_PRINT_LABELS = {
   parentview: '학부모용 화면',
   admission5: '1·2학년 5등급 기준 입시 탐색기',
   admission9: '3학년 9등급 기준 입시 탐색기',
+  evalanalyzer: '생기부 평가항목 분석기',
 };
 
 
@@ -24,6 +25,7 @@ const TAB_PRINT_LABELS = {
 const ADMISSION_FILE_PATHS = {
   admission5: 'public/admission5.html',
   admission9: 'public/admission9.html',
+  evalanalyzer: 'public/evalanalyzer.html',
 };
 
 function loadAdmissionFrame(tabName, forceReload) {
@@ -48,7 +50,7 @@ function switchTab(nm) {
   const resScr = document.getElementById('res-scr');
 
   // PDF 없이 접근 가능한 탭 목록
-  const alwaysTabs = ['admission5', 'admission9'];
+  const alwaysTabs = ['admission5', 'admission9', 'evalanalyzer'];
   const adminTabs  = ['unimaterial'];
   const isAdmin    = typeof window.isAdminLoggedIn === 'function' && window.isAdminLoggedIn();
   const hasPdf     = !!parsedData;
@@ -95,6 +97,7 @@ function switchTab(nm) {
   }, 50);
   if (nm==='parentview') setTimeout(() => { if (typeof renderParentView === 'function') renderParentView(); }, 80);
   if (nm==='admission5' || nm==='admission9') setTimeout(() => loadAdmissionFrame(nm), 50);
+  if (nm==='evalanalyzer') setTimeout(() => loadAdmissionFrame(nm), 50);
   // 대시보드 탭 전환 시 꺾은선 차트 재그리기
   if (nm==='dashboard') requestAnimationFrame(() => requestAnimationFrame(initGradeCharts));
   // 인쇄용 제목 갱신
@@ -104,6 +107,7 @@ function switchTab(nm) {
   // 인쇄 버튼 표시
   const pb = document.getElementById('tab-print-btn');
   if (pb) { pb.style.display = (nm==='admission5' || nm==='admission9') ? 'none' : 'inline-flex'; pb.dataset.tab = nm; }
+  if (typeof syncMoreMenuActive === 'function') syncMoreMenuActive(nm);
   const psel = document.getElementById('print-preset-sel');
   if (psel) { psel.style.display = (nm==='admission5' || nm==='admission9') ? 'none' : 'inline-block'; psel.value = 'detail'; applyPrintPresetPreview('detail'); }
   const pdesc = document.getElementById('print-preset-desc');

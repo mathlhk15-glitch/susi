@@ -233,6 +233,7 @@
 <div class="sb-ni" onclick="switchTab('dashboard')"><div class="sb-pip" style="background:#e67e22"></div>📊 정량 대시보드<span class="sb-cnt" id="snc-db">—</span></div>
 <div class="sb-ni" onclick="switchTab('aiprompt')"><div class="sb-pip" style="background:#9b59b6"></div>🤖 AI 프롬프트<span class="sb-cnt" id="snc-ai">—</span></div>
 <div class="sb-ni" id="sb-ni-uni-main" onclick="switchTab('unimaterial')"><div class="sb-pip" style="background:#2ecc71"></div>🏫 대학자료 분석<span class="sb-cnt" id="snc-uni2">—</span></div>
+<div class="sb-ni" onclick="switchTab('evalanalyzer')" style="border-left:2px solid #e67e22;padding-left:6px"><div class="sb-pip" style="background:#e67e22"></div>📊 평가항목 분석기<span class="sb-cnt">—</span></div>
 <div class="sb-ni" onclick="switchTab('parentview')" style="border-left:2px solid #9b59b6;padding-left:6px"><div class="sb-pip" style="background:#9b59b6"></div>👨‍👩‍👧 학부모용 화면<span class="sb-cnt">—</span></div>
 </div>
 <div class="sb-ft">
@@ -323,9 +324,16 @@
 <button class="tab-btn" onclick="switchTab('dashboard')">📊 대시보드</button>
 <button class="tab-btn" onclick="switchTab('aiprompt')">🤖 AI분석</button>
 <button class="tab-btn" onclick="switchTab('unimaterial')">🏫 대학자료</button>
-<button class="tab-btn" onclick="switchTab('parentview')" style="background:var(--sur2);border-color:var(--cs)">👨‍👩‍👧 학부모용</button>
-<button class="tab-btn" onclick="window.open('https://mathlhk15-glitch.github.io/2028ipsi/','_blank')">🎓 1·2학년 입시</button>
-<button class="tab-btn" onclick="window.open('https://mathlhk15-glitch.github.io/ipsi/','_blank')">🎓 3학년 입시</button>
+<div class="tab-more-wrap" id="tab-more-wrap">
+  <button class="tab-btn tab-more-btn" id="tab-more-btn" onclick="toggleMoreMenu(event)" title="추가 메뉴">⋯ 더보기 <span class="tab-more-arrow" id="tab-more-arrow">▾</span></button>
+  <div class="tab-more-menu" id="tab-more-menu">
+    <button class="tab-more-item" onclick="switchTab('evalanalyzer');closeMoreMenu()" id="more-item-evalanalyzer">📊 평가항목 분석기</button>
+    <button class="tab-more-item" onclick="switchTab('parentview');closeMoreMenu()" id="more-item-parentview">👨‍👩‍👧 학부모용 화면</button>
+    <div class="tab-more-divider"></div>
+    <button class="tab-more-item" onclick="window.open('https://mathlhk15-glitch.github.io/2028ipsi/','_blank')">🎓 1·2학년 입시</button>
+    <button class="tab-more-item" onclick="window.open('https://mathlhk15-glitch.github.io/ipsi/','_blank')">🎓 3학년 입시</button>
+  </div>
+</div>
 <button id="tab-print-btn" onclick="printCurrentTab()" style="margin-left:auto;display:none;align-items:center;gap:5px;padding:6px 14px;background:var(--gold-bg);border:1px solid var(--gold-bdr);border-radius:var(--rs);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" title="현재 탭 인쇄/PDF저장">🖨️ 인쇄·PDF</button>
 <select id="print-preset-sel" onchange="applyPrintPresetPreview(this.value)" style="display:none;margin-left:4px;padding:5px 8px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:11px;background:var(--sur);color:var(--tx2);cursor:pointer" title="인쇄 프리셋">
 <option value="detail">교사용 상세</option>
@@ -607,6 +615,22 @@
 이 내용은 인쇄 시 상담록 상단에 표시됩니다."></textarea>
 <button class="btn btn-gold" onclick="saveFinalMemo()">💾 최종 피드백 저장</button>
 </div>
+<div id="eval-result-card" style="display:none;margin-bottom:16px;padding:14px 18px;background:var(--sur2);border:1px solid var(--bdr);border-left:3px solid #e67e22;border-radius:var(--r)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-size:13px;font-weight:800;color:var(--tx)">📊 평가항목 분석 결과</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-send-eval" onclick="sendToEvalAnalyzer()" type="button">📤 분석기 다시 열기</button>
+      <button onclick="clearEvalResult()" style="padding:4px 10px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:11px;color:var(--tx3);cursor:pointer">✕ 지우기</button>
+    </div>
+  </div>
+  <div id="eval-result-body" style="font-size:12px;line-height:1.8"></div>
+</div>
+<div style="margin-bottom:10px;padding:10px 14px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);display:flex;align-items:center;gap:10px;flex-wrap:wrap" id="memo-eval-bar">
+  <span style="font-size:12px;font-weight:700;color:var(--tx2)">📊 평가항목 분석기 연동</span>
+  <button class="btn btn-send-eval" onclick="sendToEvalAnalyzer()" type="button">📤 평가항목 분석기로 전송</button>
+  <button onclick="checkEvalResult()" style="padding:5px 12px;background:var(--sur2);border:1px solid var(--bdr2);border-radius:var(--rs);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer">🔄 결과 불러오기</button>
+  <span style="font-size:11px;color:var(--tx3)">분석 완료 후 "결과 불러오기"로 상담록에 요약을 추가하세요</span>
+</div>
 <div id="bd-memos"><div class="empty"><div class="ei">📝</div><p>원문 뷰어에서 하이라이트/메모를 저장하면 여기에 모입니다</p></div></div>
 </div>
 <!-- v13(뀨버전): Dashboard -->
@@ -616,6 +640,11 @@
 <!-- v13(뀨버전): AI Prompt -->
 <div class="vp" data-section-title="🤖 AI 분석 프롬프트" id="vp-aiprompt">
 <div id="bd-aiprompt"><div class="empty"><div class="ei">🤖</div><p>PDF를 업로드하면 Claude AI 분석용 프롬프트를 자동 생성합니다</p></div></div>
+<div id="aiprompt-eval-bar" style="display:none;margin-top:16px;padding:12px 16px;background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--r);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <span style="font-size:12px;font-weight:700;color:var(--tx2)">📊 평가항목 분석기 연동</span>
+  <button class="btn btn-send-eval" onclick="sendToEvalAnalyzer()" type="button" title="현재 학생 생기부를 평가항목 분석기로 전송">📤 평가항목 분석기로 전송</button>
+  <span style="font-size:11px;color:var(--tx3)">→ 학종 10개 항목별 근거 추출 · 대학별 강도 분석</span>
+</div>
 </div>
 <div class="vp" data-section-title="🏫 대학자료 분석" id="vp-unimaterial">
   <!-- renderUniMaterialTab()이 isAdmin 여부를 판단해 UI 전체를 렌더링 -->
@@ -624,6 +653,22 @@
       <p>대학자료 탭을 클릭하면 분석 화면이 표시됩니다.</p>
     </div>
   </div>
+</div>
+
+<!-- 평가항목 분석기 -->
+<div class="vp" data-section-title="📊 생기부 평가항목 분석기" id="vp-evalanalyzer">
+<div class="admission-wrap">
+<div class="admission-info">
+<div><span class="tag" style="background:#e67e22;color:#fff">평가항목 분석</span><strong>생기부 → 대학별 평가기준 근거 추출</strong></div>
+<div>학생부종합전형 10개 공통 평가항목별 근거를 자동 추출하고, 강도를 분석합니다. 대학별 기준도 직접 추가 등록할 수 있습니다.</div>
+<div class="admission-open-row">
+<button class="admission-btn" onclick="sendToEvalAnalyzer()" type="button">📤 현재 학생 생기부 전송</button>
+<button class="admission-btn" onclick="loadAdmissionFrame('evalanalyzer')" type="button">탭 새로고침</button>
+<button class="admission-btn" onclick="openAdmissionInNewWindow('evalanalyzer')" type="button">새 창으로 열기</button>
+</div>
+</div>
+<iframe class="admission-frame" id="evalanalyzer-frame" loading="lazy" title="생기부 평가항목 분석기"></iframe>
+</div>
 </div>
 <!-- 학부모용 화면 -->
 <div class="vp" data-section-title="👨‍👩‍👧 학부모용 화면" id="vp-parentview">
@@ -859,6 +904,144 @@
         });
       });
     }
-  </script>
+  
+// ── 평가항목 분석기로 생기부 텍스트 전송
+function sendToEvalAnalyzer() {
+  try {
+    var payload = {
+      rawText: allLines && allLines.length > 0 ? allLines.join('\n') : '',
+      grade: (infoObj && infoObj.grade) ? infoObj.grade : '',
+      major: (infoObj && infoObj.major) ? infoObj.major : '',
+      createdAt: new Date().toISOString()
+    };
+    if (!payload.rawText) {
+      alert('먼저 생기부 PDF를 업로드해주세요.');
+      return;
+    }
+    sessionStorage.setItem('susi_eval_payload', JSON.stringify(payload));
+    loadAdmissionFrame('evalanalyzer', true);
+    switchTab('evalanalyzer');
+  } catch(e) {
+    alert('전송 실패: ' + e.message);
+  }
+}
+
+// ── 더보기 드롭다운 열기/닫기
+function toggleMoreMenu(e) {
+  e && e.stopPropagation();
+  var btn  = document.getElementById('tab-more-btn');
+  var menu = document.getElementById('tab-more-menu');
+  var open = menu.classList.contains('open');
+  if (open) { menu.classList.remove('open'); btn.classList.remove('open'); }
+  else       { menu.classList.add('open');    btn.classList.add('open'); }
+}
+function closeMoreMenu() {
+  var btn  = document.getElementById('tab-more-btn');
+  var menu = document.getElementById('tab-more-menu');
+  if (menu) menu.classList.remove('open');
+  if (btn)  btn.classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('tab-more-wrap');
+  if (wrap && !wrap.contains(e.target)) closeMoreMenu();
+});
+
+// ── 더보기 항목 active 상태 동기화
+function syncMoreMenuActive(nm) {
+  ['evalanalyzer','parentview'].forEach(function(id) {
+    var el = document.getElementById('more-item-' + id);
+    if (!el) return;
+    el.classList.toggle('active', nm === id);
+  });
+  var moreBtn = document.getElementById('tab-more-btn');
+  if (moreBtn) {
+    var specialTabs = ['evalanalyzer','parentview'];
+    moreBtn.classList.toggle('active', specialTabs.includes(nm));
+  }
+}
+
+// ── 평가항목 분석 결과 역방향 수신 (evalanalyzer → 상담록)
+function checkEvalResult() {
+  try {
+    var saved = sessionStorage.getItem('susi_eval_result');
+    if (!saved) {
+      alert('아직 분석 결과가 없습니다.\n평가항목 분석기에서 분석을 완료한 뒤 다시 시도해주세요.');
+      return;
+    }
+    var result = JSON.parse(saved);
+    renderEvalResultCard(result);
+  } catch(e) {
+    alert('결과 불러오기 실패: ' + e.message);
+  }
+}
+
+function renderEvalResultCard(result) {
+  var card = document.getElementById('eval-result-card');
+  var body = document.getElementById('eval-result-body');
+  if (!card || !body) return;
+
+  var domains = [
+    { name: '학업역량', items: ['학업성취도','학업태도와 학업의지','탐구력'], cls: '#2d5cc8' },
+    { name: '진로역량', items: ['전공 관련 교과목 이수·성취','진로 탐색 활동과 경험','창의·융합적 사고능력'], cls: '#7c3aed' },
+    { name: '공동체역량', items: ['협업과 소통능력','나눔과 배려','성실성과 규칙준수','리더십'], cls: '#1a8a5a' }
+  ];
+
+  var clsMap  = { '매우 강함': '#1a8a5a', '강함': '#2d8a4e', '보통': '#b87a10', '약함': '#c0392b', '근거 부족': '#888' };
+  var bgMap   = { '매우 강함': 'rgba(26,138,90,0.1)', '강함': 'rgba(45,138,78,0.08)', '보통': 'rgba(184,122,16,0.1)', '약함': 'rgba(192,57,43,0.1)', '근거 부족': 'rgba(136,136,136,0.08)' };
+  var weakItems = [], strongItems = [];
+
+  var html = '';
+  html += '<div style="font-size:11px;color:var(--tx3);margin-bottom:10px">분석 일시: ' + (result.analyzedAt || '—') + ' | 선택 대학: ' + (result.selectedUnis && result.selectedUnis.length ? result.selectedUnis.join(', ') : '미선택') + '</div>';
+
+  domains.forEach(function(domain) {
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="font-size:11px;font-weight:800;color:' + domain.cls + ';margin-bottom:5px;border-left:3px solid ' + domain.cls + ';padding-left:6px">' + domain.name + '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    domain.items.forEach(function(item) {
+      var info = result.items && result.items[item];
+      var label = info ? info.label : '—';
+      var cnt   = info ? info.count : 0;
+      var color = clsMap[label] || '#888';
+      var bg    = bgMap[label] || 'rgba(136,136,136,0.08)';
+      if (label === '약함' || label === '근거 부족') weakItems.push(item);
+      if (label === '매우 강함' || label === '강함') strongItems.push(item);
+      html += '<span style="padding:4px 10px;border-radius:12px;border:1px solid ' + color + ';background:' + bg + ';font-size:11px;font-weight:700;color:' + color + '" title="근거 ' + cnt + '개">';
+      html += item + ' <span style="opacity:.7">(' + label + ')</span></span>';
+    });
+    html += '</div></div>';
+  });
+
+  if (weakItems.length) {
+    html += '<div style="margin-top:10px;padding:10px 12px;background:rgba(192,57,43,0.07);border:1px solid rgba(192,57,43,0.25);border-radius:6px">';
+    html += '<div style="font-size:11px;font-weight:800;color:#c0392b;margin-bottom:4px">⚠️ 보완 필요 항목</div>';
+    html += '<div style="font-size:12px;color:var(--tx2)">' + weakItems.join(' · ') + '</div>';
+    if (result.uniComments && result.uniComments.length) {
+      html += '<div style="margin-top:8px;font-size:11px;color:var(--tx3);line-height:1.8">' + result.uniComments.join('<br>') + '</div>';
+    }
+    html += '</div>';
+  }
+  if (strongItems.length) {
+    html += '<div style="margin-top:8px;padding:8px 12px;background:rgba(26,138,90,0.07);border:1px solid rgba(26,138,90,0.2);border-radius:6px">';
+    html += '<div style="font-size:11px;font-weight:800;color:#1a8a5a;margin-bottom:3px">✅ 강점 항목</div>';
+    html += '<div style="font-size:12px;color:var(--tx2)">' + strongItems.join(' · ') + '</div>';
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+  card.style.display = 'block';
+}
+
+function clearEvalResult() {
+  var card = document.getElementById('eval-result-card');
+  if (card) card.style.display = 'none';
+  sessionStorage.removeItem('susi_eval_result');
+}
+
+// ── PDF 로드 후 전송 버튼 영역 표시
+function showEvalBars() {
+  var aiBar = document.getElementById('aiprompt-eval-bar');
+  if (aiBar) aiBar.style.display = 'flex';
+}
+</script>
 </body>
 </html>

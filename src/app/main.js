@@ -91,6 +91,7 @@ async function processPdf(file) {
 
     // 학부모용 화면 렌더링
     if (typeof renderParentView === 'function') setTimeout(renderParentView, 200);
+    if (typeof showEvalBars === 'function') showEvalBars();
 
     // 빠른 접근 버튼 표시
     const qbar = document.getElementById('quick-access-bar');
