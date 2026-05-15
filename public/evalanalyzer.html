@@ -1932,32 +1932,181 @@ let qualityDiagnostics = null;
 
 function parseAttendance(text) {
   const s = String(text || '');
-  const findNum = (patterns) => { for (const re of patterns) { const m = s.match(re); if (m) return Number(m[1]||0); } return null; };
-  const absence = findNum([/결석\s*(\d+)\s*(?:일|회)/, /결석일수\s*(\d+)/]);
-  const unexcusedAbsence = findNum([/미인정\s*결석\s*(\d+)\s*(?:일|회)/, /무단\s*결석\s*(\d+)/]);
-  const late = findNum([/지각\s*(\d+)\s*(?:회|일)/, /미인정\s*지각\s*(\d+)/]);
-  const early = findNum([/조퇴\s*(\d+)\s*(?:회|일)/]);
-  const result = findNum([/결과\s*(\d+)\s*(?:회|일)/]);
-  const found = [absence, unexcusedAbsence, late, early, result].some(v => v != null) || /(개근|무결석)/.test(s);
-  return { found, absence: absence??0, unexcusedAbsence: unexcusedAbsence??0, late: late??0, early: early??0, result: result??0, perfect: /(개근|무결석)/.test(s) };
+
+  // 1) 미인정/무단 명시 서술 패턴
+  const findNum = (pats) => { for (const re of pats) { const m = s.match(re); if (m) return Number(m[1]||0); } return null; };
+  let absence = findNum([/(?:미인정|무단)\s*결석\s*(\d+)\s*(?:일|회)/, /결석일수\s*(\d+)/]);
+  let late    = findNum([/(?:미인정|무단)\s*지각\s*(\d+)\s*(?:회|일)/]);
+  let early   = findNum([/(?:미인정|무단)\s*조퇴\s*(\d+)\s*(?:회|일)/]);
+
+  // 2) 출결 테이블 파싱: PDF 추출 시 마침표(.)가 0 대신 사용되는 경우 처리
+  //    헤더가 데이터 앞·뒤 어디에 있어도 동작하도록 전체 텍스트에서 테이블 탐색
+  if (absence === null && late === null) {
+    // 출결 테이블 헤더 키워드 주변 ±800자 범위로 탐색
+    const headerIdx = s.search(/(?:출결상황|출결\s*상황|수업일수|결석일수)/);
+    const searchZone = headerIdx >= 0 ? s.slice(Math.max(0, headerIdx - 400), headerIdx + 800) : s.slice(0, 1200);
+
+    // 마침표를 0으로 정규화한 뒤 숫자 매칭
+    // PDF 출결 테이블: "1 191 1 . . . . . 2 . . . . ." (학년 포함 14개 or 13개)
+    // → 정규화: "1 191 1 0 0 0 0 0 2 0 0 0 0 0"
+    const normalized = searchZone.replace(/(?<!\d)\.\s*(?!\d)/g, '0 ');
+
+    // 출결 테이블 파싱 헬퍼: 숫자 배열에서 수업일수 위치를 찾아 컬럼 추출
+    const parseTableNums = (str) => {
+      // 14개 패턴 먼저 시도 (학년 컬럼 포함: 학년 + 수업일수 + 12개)
+      let m = str.match(/(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+      if (m) {
+        const n = m.slice(1).map(Number);
+        // n[1]이 수업일수(50~250)이면 학년 컬럼이 앞에 있는 구조
+        if (n[1] >= 50 && n[1] <= 250) {
+          return { absence: n[3], late: n[6], early: n[9], result: n[12], workDays: n[1] };
+        }
+        // n[0]이 수업일수이면 학년 없는 구조 (13개 컬럼)
+        if (n[0] >= 50 && n[0] <= 250) {
+          return { absence: n[2], late: n[5], early: n[8], result: n[11], workDays: n[0] };
+        }
+      }
+      // 13개 패턴
+      m = str.match(/(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+      if (m) {
+        const n = m.slice(1).map(Number);
+        if (n[0] >= 50 && n[0] <= 250) {
+          return { absence: n[2], late: n[5], early: n[8], result: n[11], workDays: n[0] };
+        }
+      }
+      return null;
+    };
+
+    const parsed = parseTableNums(normalized);
+    if (parsed) {
+      absence = parsed.absence; late = parsed.late; early = parsed.early;
+      return { found: true, absence, unexcusedAbsence: absence, late, early, result: parsed.result||0, perfect: false };
+    }
+
+    // 2-b) 출결상황 섹션 이후 탐색 (기존 방식 유지)
+    const secMatch = s.match(/(?:출결상황|출결\s*상황)([\s\S]{0,600})/);
+    if (secMatch) {
+      const norm2 = secMatch[1].replace(/(?<!\d)\.\s*(?!\d)/g, '0 ');
+      const parsed2 = parseTableNums(norm2);
+      if (parsed2) {
+        absence = parsed2.absence; late = parsed2.late; early = parsed2.early;
+        return { found: true, absence, unexcusedAbsence: absence, late, early, result: parsed2.result||0, perfect: false };
+      }
+    }
+  }
+
+  // 3) 서술형: 미인정 없이 '결석 N일', '지각 N회' 형태도 감지
+  if (absence === null) absence = findNum([/결석\s*(\d+)\s*(?:일|회)/]);
+  if (late    === null) late    = findNum([/지각\s*(\d+)\s*(?:회|일)/]);
+  if (early   === null) early   = findNum([/조퇴\s*(\d+)\s*(?:회|일)/]);
+
+  // 4) 세로 분리형: 출결 섹션 내 '미인정' 다음 숫자를 결석→지각→조퇴 순으로 매핑
+  if (absence === null && late === null) {
+    const lines = s.split(/\n/).map(l => l.trim());
+    // 헤더가 데이터 뒤에 올 수 있으므로, 수업일수/결석일수 키워드도 시작점으로 허용
+    let si = lines.findIndex(l => /출결상황|출결\s*상황|수업일수|결석일수/.test(l));
+    if (si === -1) si = 0;
+    // 헤더가 데이터 뒤에 있는 경우: si를 앞으로 당겨서 데이터 포함
+    if (si > 0 && /출결상황|출결\s*상황/.test(lines[si])) {
+      const dataStart = Math.max(0, si - 20);
+      si = lines.findIndex((l, i) => i >= dataStart && /수업일수|결석일수/.test(l));
+      if (si === -1) si = Math.max(0, lines.findIndex(l => /출결상황|출결\s*상황/.test(l)) - 20);
+    }
+    const ei = lines.findIndex((l, i) => i > si && /교과학습|창의적|세부능력|행동특성|독서|봉사|수상/.test(l));
+    const sl = lines.slice(si, ei === -1 ? si + 60 : ei);
+    const vals = [];
+    for (let i = 0; i < sl.length; i++) {
+      if (/미인정/.test(sl[i])) {
+        for (let j = i+1; j < Math.min(i+5, sl.length); j++) {
+          if (/^\d+$/.test(sl[j])) { vals.push(Number(sl[j])); break; }
+        }
+      }
+    }
+    if (vals.length >= 1) absence = vals[0];
+    if (vals.length >= 2) late    = vals[1];
+    if (vals.length >= 3) early   = vals[2];
+  }
+
+  // 5) 개근 판정: 질병결석 1건 이하이고 미인정 없으면 사실상 개근으로 처리
+  const perfect = /(개근|무결석)/.test(s);
+  const found = [absence, late, early].some(v => v != null) || perfect;
+  return { found, absence: absence??0, unexcusedAbsence: absence??0, late: late??0, early: early??0, result: 0, perfect };
 }
 
 function parseVolunteerHours(text) {
   const s = String(text || '');
-  let hours = [];
-  for (const m of s.matchAll(/봉사(?:활동)?[^\d]{0,20}(\d{1,3})\s*시간/g)) hours.push(Number(m[1]));
-  for (const m of s.matchAll(/총\s*(\d{1,3})\s*시간/g)) hours.push(Number(m[1]));
+
+  // 1) 합계/총계 명시 → 단일 대표값 우선 사용
+  const sumPats = [
+    /연간\s*봉사시간\s*합계[^\d]*(\d{1,3})/,
+    /합계[^\d]*(\d{1,3})\s*시간/,
+    /총\s*(\d{1,3})\s*시간/,
+    /소계\s*(\d{1,3})\s*시간/,
+    /연간\s*봉사시간[^\d]*(\d{1,3})\s*시간/,
+  ];
+  for (const re of sumPats) { const m = s.match(re); if (m) return { found: true, totalHours: Number(m[1]), none: false }; }
+
+  // 2) '봉사 N시간' 직접 서술 합산
+  const dh = [];
+  for (const m of s.matchAll(/봉사(?:활동)?[^\d]{0,20}(\d{1,3})\s*시간/g)) dh.push(Number(m[1]));
+  if (dh.length) return { found: true, totalHours: dh.reduce((a,b)=>a+b,0), none: false };
+
+  // 3) 봉사활동 섹션 탐색 (직접 섹션 또는 창체 하위)
+  const lines = s.split(/\n/).map(l => l.trim());
+  let si = lines.findIndex(l => /봉사활동상황|봉사활동/.test(l));
+  if (si === -1) si = lines.findIndex(l => /창의적\s*체험활동/.test(l));
+  if (si >= 0) {
+    const ei = lines.findIndex((l, i) => i > si && /교과학습|세부능력|행동특성|독서|출결|수상|진로활동|자율활동|동아리활동/.test(l) && !/봉사/.test(l));
+    const sl = lines.slice(si + 1, ei === -1 ? si + 60 : ei);
+
+    // 소계 N (시간 단위 없이)
+    for (const ln of sl) { const m = ln.match(/^소계\s+(\d{1,3})$/); if (m) return { found: true, totalHours: Number(m[1]), none: false }; }
+
+    const dateHours = [];
+    const dateRe = /^\d{4}[.\-]\d{2}[.\-]\d{2}$/;
+    for (let i = 0; i < sl.length; i++) {
+      // 세로분리: 날짜 줄 다음 숫자 줄
+      if (dateRe.test(sl[i]) && i+1 < sl.length && /^\d{1,3}$/.test(sl[i+1])) { dateHours.push(Number(sl[i+1])); continue; }
+      // 가로1: '날짜 바로뒤 숫자' (날짜가 마지막에서 두번째)
+      const m1 = sl[i].match(/\d{4}[.\-]\d{2}[.\-]\d{2}\s+(\d{1,2})(?:\s|$)/);
+      if (m1) { dateHours.push(Number(m1[1])); continue; }
+      // 가로2: 날짜 포함 행의 맨 끝 숫자 (나이스 표: 학년 날짜 장소 활동명 시간)
+      if (/\d{4}[.\-]\d{2}[.\-]\d{2}/.test(sl[i])) {
+        const m2 = sl[i].match(/(\d{1,2})\s*$/);
+        if (m2 && Number(m2[1]) >= 1 && Number(m2[1]) <= 24) dateHours.push(Number(m2[1]));
+      }
+    }
+    if (dateHours.length) return { found: true, totalHours: dateHours.reduce((a,b)=>a+b,0), none: false };
+
+    // 4) 최후 수단: 섹션 내 단독 1~24 숫자 줄 합산 (시간으로 간주)
+    const standalone = sl.filter(ln => /^\d{1,2}$/.test(ln) && Number(ln) >= 1 && Number(ln) <= 24);
+    if (standalone.length >= 1 && standalone.length <= 15) {
+      return { found: true, totalHours: standalone.map(Number).reduce((a,b)=>a+b,0), none: false };
+    }
+  }
+
   const none = /(봉사활동\s*실적\s*없음|봉사\s*0\s*시간)/.test(s);
-  const totalHours = hours.length ? Math.max(...hours) : (none ? 0 : null);
-  return { found: totalHours != null || none, totalHours: totalHours??0, none };
+  return { found: none, totalHours: 0, none };
 }
 
 function analyzeInputQuality(text) {
   const raw = String(text || '');
   const sections = ['창의적 체험활동','교과학습발달상황','세부능력','봉사활동','행동특성','독서활동','출결'];
+  // 나이스 PDF 추출 시 섹션명이 다양하게 변형될 수 있어 별칭도 함께 탐색
+  const sectionAliases = {
+    '세부능력': ['세부능력','세부 능력','세부능력및특기사항','세부능력 및 특기사항','특기사항'],
+    '창의적 체험활동': ['창의적 체험활동','창의적체험활동','창체'],
+    '교과학습발달상황': ['교과학습발달상황','교과 학습 발달 상황','교과학습'],
+    '행동특성': ['행동특성','행동 특성','행동특성및종합의견','행동특성 및 종합의견'],
+    '독서활동': ['독서활동','독서 활동','독서활동상황'],
+    '봉사활동': ['봉사활동','봉사 활동'],
+    '출결': ['출결','출결상황','출결 상황'],
+  };
   const detected = {};
   for (const sec of sections) {
-    detected[sec] = raw.split('\n').some(line => (getSectionFromLine ? getSectionFromLine(line) === sec : false)) || raw.includes(sec);
+    const aliases = sectionAliases[sec] || [sec];
+    detected[sec] = raw.split('\n').some(line => (getSectionFromLine ? getSectionFromLine(line) === sec : false))
+      || aliases.some(alias => raw.includes(alias));
   }
   const lineCount = raw.split('\n').length;
   const gradeStats = parseGradeScore(raw);
@@ -2509,6 +2658,39 @@ function parseGradeScore(text) {
   if (entries.length < 2) {
     const p2c = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·]{1,15})\s+\d+\s+(\d{2,3})\s+[A-Ea-e]\s+([1-9])(?!\d)/g;
     for (const m of raw.matchAll(p2c)) addEntry(m[1], m[2], m[3], m.index, m.index + m[0].length, '공백형식');
+  }
+
+  // 2-3순위: 나이스 PDF 추출 특수 포맷 — 원점수/평균(표준편차) 형식
+  // 예: "국어 4 92/80.2(12.8) A(151) 3" 또는 줄바꿈이 섞인 형태
+  if (entries.length < 2) {
+    const p2d = /([가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·\s]{1,20}?)[ \t\n]+\d+[ \t\n]+(\d{2,3})\/[\d.]+(?:\([\d.]+\))?[ \t\n]+[A-Ea-e](?:\(\d+\))?[ \t\n]+([1-9])(?!\d)/g;
+    for (const m of raw.matchAll(p2d)) {
+      const subj = m[1].trim().replace(/\s+/g, ' ');
+      if (subj.length >= 2) addEntry(subj, m[2], m[3], m.index, m.index + m[0].length, '나이스표준형');
+    }
+  }
+
+  // 2-4순위: 세로 분리 추출 — 각 컬럼이 별도 줄로 추출되는 나이스 PDF 패턴
+  // 예: "국어\n4\n92\n80.2\n12.8\nA\n151\n3" 처럼 완전 분리된 경우
+  // 인접 줄 슬라이딩 윈도우로 과목명+등급(1~9) 조합을 탐색
+  if (entries.length < 2) {
+    const lines2 = raw.split(/\n/);
+    for (let i = 0; i < lines2.length - 3; i++) {
+      const subj = lines2[i].trim();
+      if (!/^[가-힣a-zA-ZⅠⅡⅢⅣⅤⅥⅦⅧⅨ·\s]{2,20}$/.test(subj)) continue;
+      if (/^\d+$/.test(subj)) continue;
+      // 과목명 다음 5줄 안에서 원점수(2~3자리)와 등급(1~9) 찾기
+      const window = lines2.slice(i + 1, i + 8).map(l => l.trim());
+      let foundScore = null, foundGrade = null;
+      for (const w of window) {
+        if (foundScore === null && /^\d{2,3}$/.test(w) && Number(w) >= 40 && Number(w) <= 100) foundScore = w;
+        if (foundGrade === null && /^[1-9]$/.test(w)) foundGrade = w;
+        if (foundScore !== null && foundGrade !== null) break;
+      }
+      if (foundGrade !== null) {
+        addEntry(subj.replace(/\s+/g, ''), foundScore, foundGrade, null, null, '세로분리형');
+      }
+    }
   }
 
   // 3순위: 등급만 있는 형식. 단, 점수+등급이 2개 이상 잡히면 중복·과잉 파싱 방지를 위해 사용하지 않음.
