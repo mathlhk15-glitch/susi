@@ -11,6 +11,7 @@ function renderAIPrompt(parsedData, info, analysis) {
   html += `<div class="prompt-actions">
   <button class="btn-copy-prompt" onclick="copyPromptToClipboard()">📋 복사 → GPT/Claude에 붙여넣기</button>
   <button onclick="togglePromptExample()" id="prompt-example-btn" style="margin-left:8px;padding:5px 12px;background:var(--sur3);border:1px solid var(--bdr2);border-radius:var(--rs);font-size:11px;color:var(--tx2);cursor:pointer;font-weight:700">💡 출력 예시 보기</button>
+  <button onclick="exportToGapAnalyzer()" style="margin-left:8px;padding:5px 14px;background:#1a6e3c;border:none;border-radius:var(--rs);font-size:11px;color:#fff;cursor:pointer;font-weight:700;white-space:nowrap" title="생기부 요약을 GAP 분석기로 전달합니다">🎯 GAP 분석기로 보내기</button>
   <div id="prompt-example-box" style="display:none;margin-top:10px;padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--tx2);line-height:1.8">
     ① [강점] 수학적 모델링 능력 (3학년 물리 세특 근거)<br>
     ② [리스크] 3학년 진로활동 기록이 1학년 대비 감소<br>
@@ -458,4 +459,64 @@ function copyUniAddonToClipboard() {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   });
+}
+
+// ════════════════════════════════════════
+//  🎯 GAP 분석기 연동 — localStorage 내보내기
+// ════════════════════════════════════════
+function exportToGapAnalyzer() {
+  if (!parsedData || !v6Analysis) {
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast';
+    toast.style.background = '#c0392b';
+    toast.textContent = '⚠️ PDF를 먼저 업로드하세요.';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+    return;
+  }
+
+  // ── 생기부 전체 텍스트 수집 ──────────────────────────────────────────────
+  const subjectRecs = Object.values(parsedData.subject || {}).flat();
+  const ccaRecs     = [...(parsedData.auto || []), ...(parsedData.club || []), ...(parsedData.career || [])];
+  const behavRecs   = parsedData.behav || [];
+  const toText = recs => recs.map(r => r.full || r.summary || '').filter(Boolean).join('\n');
+
+  const summaryText = [
+    subjectRecs.length ? '[교과 탐구]\n' + toText(subjectRecs)        : '',
+    ccaRecs.length     ? '[비교과 활동]\n' + toText(ccaRecs)          : '',
+    behavRecs.length   ? '[행동특성·종합의견]\n' + toText(behavRecs)  : '',
+  ].filter(Boolean).join('\n\n');
+
+  // ── 학생 기본정보 수집 ────────────────────────────────────────────────────
+  const rawInfo   = (typeof _getPrivacyInfo === 'function') ? _getPrivacyInfo() : {};
+  const deptInput = document.getElementById('prompt-uni-dept');
+  const majorText = deptInput?.value?.trim() || '';
+
+  // ── localStorage 저장 ─────────────────────────────────────────────────────
+  const payload = {
+    summary:    summaryText,
+    majorHint:  majorText,
+    name:       rawInfo.name   || '',
+    school:     rawInfo.school || '',
+    exportedAt: new Date().toISOString(),
+  };
+
+  try {
+    localStorage.setItem('susi_gap_export', JSON.stringify(payload));
+  } catch (e) {
+    // 용량 초과 시 앞 3000자만
+    payload.summary = summaryText.slice(0, 3000) + (summaryText.length > 3000 ? '\n...(생략됨)' : '');
+    localStorage.setItem('susi_gap_export', JSON.stringify(payload));
+  }
+
+  // ── GAP 분석기 새 탭으로 열기 ─────────────────────────────────────────────
+  const gapUrl = new URL('gap_analyzer.html', window.location.href).href;
+  window.open(gapUrl, '_blank');
+
+  const toast = document.createElement('div');
+  toast.className = 'copy-toast';
+  toast.style.background = '#1a6e3c';
+  toast.textContent = '🎯 GAP 분석기를 열었습니다. 생기부 내용이 자동으로 채워집니다.';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
